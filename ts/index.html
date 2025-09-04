@@ -18,10 +18,13 @@
       }
       body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', Arial, sans-serif; margin: 24px; }
       .container { max-width: 1100px; margin: 0 auto; }
-      textarea { width: 100%; height: 100px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; border-radius: 10px; border: 1px solid var(--border); padding: 12px; background: var(--panel); color: var(--text); }
-      pre { background: var(--code-bg); padding: 12px; overflow: auto; border-radius: 10px; border: 1px solid var(--border); }
-      .row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+      textarea { box-sizing: border-box; display: block; width: 100%; height: 100px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; border-radius: 10px; border: 1px solid var(--border); padding: 12px; background: var(--panel); color: var(--text); }
+      pre { box-sizing: border-box; background: var(--code-bg); padding: 12px; overflow: auto; border-radius: 10px; border: 1px solid var(--border); }
+      #result { min-height: 100px; }
+      .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: stretch; }
       .panel { border: 1px solid var(--border); border-radius: 12px; padding: 12px; background: var(--panel); box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06); }
+      .panel.stack { display: grid; grid-template-rows: auto 1fr; }
+      .panel.stack > textarea, .panel.stack > pre { height: 100%; }
       h1 { font-size: 22px; margin: 0 0 12px 0; }
       h3 { margin: 0 0 8px 0; font-size: 13px; text-transform: uppercase; color: var(--muted); letter-spacing: .02em; }
       .toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
@@ -29,6 +32,10 @@
       button { padding: 8px 12px; border-radius: 10px; border: 1px solid var(--accent); background: var(--accent); color: var(--accent-text); cursor: pointer; }
       button:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
       label { font-size: 13px; color: var(--muted); }
+      details.panel { padding: 0; }
+      details.panel > summary { list-style: none; cursor: pointer; padding: 12px; border-bottom: 1px solid var(--border); border-radius: 12px 12px 0 0; font-weight: 600; color: var(--text); }
+      details.panel[open] > summary { border-bottom-color: var(--border); }
+      details.panel > div { padding: 12px; }
     </style>
   </head>
   <body>
@@ -42,13 +49,27 @@
         </select>
         <button id="run">Run</button>
       </div>
-      <textarea id="input" placeholder="Type an expression (Calculator: 3 + 5 * (10 - 4); Simple: hello; 123)"></textarea>
       <div class="row" style="margin-top:12px">
-        <div class="panel"><h3>Tokens</h3><pre id="tokens"></pre></div>
-        <div class="panel"><h3>CST</h3><pre id="cst"></pre></div>
-        <div class="panel"><h3>AST</h3><pre id="ast"></pre></div>
+        <div class="panel stack">
+          <h3>Expression</h3>
+          <textarea id="input" placeholder="Type an expression (Calculator: 3 + 5 * (10 - 4); Simple: hello; 123)"></textarea>
+        </div>
+        <div class="panel stack">
+          <h3>Result</h3>
+          <pre id="result"></pre>
+        </div>
       </div>
-      <div class="panel" style="margin-top:16px"><h3>Output</h3><pre id="result"></pre></div>
+      <div class="row" style="margin-top:12px">
+        <div class="panel stack"><h3>Tokens</h3><pre id="tokens"></pre></div>
+        <div class="panel stack"><h3>AST (JSON)</h3><pre id="ast"></pre></div>
+      </div>
+      <details id="ast-details" class="panel" style="margin-top:16px">
+        <summary>AST Diagram</summary>
+        <div>
+          <svg id="ast-svg" width="100%" height="560" viewBox="0 0 1100 560" style="background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;"></svg>
+        </div>
+      </details>
+      
     </div>
     <script type="module" src="/web/main.ts"></script>
   </body>
