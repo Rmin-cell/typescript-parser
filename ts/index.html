@@ -4,75 +4,447 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Parser Visualizer</title>
+    <!-- Tailwind CSS for better styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons for better icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     <style>
       :root {
         --bg: #f8fafc;
         --panel: #ffffff;
-        --border: #e5e7eb;
-        --text: #0f172a;
-        --muted: #64748b;
-        --code-bg: #f3f4f6;
-        --accent: #4f46e5;
-        --accent-hover: #4338ca;
-        --accent-text: #ffffff;
+        --border: #e2e8f0;
+        --text: #1e293b;
+        --text-muted: #64748b;
+        --accent: #6366f1;
+        --accent-hover: #4f46e5;
+        --code-bg: #f1f5f9;
+        --success: #10b981;
+        --error: #ef4444;
+        --warning: #f59e0b;
+        --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+        --shadow-md: 0 4px 6px rgba(15, 23, 42, 0.1);
+        --shadow-lg: 0 10px 15px rgba(15, 23, 42, 0.1);
+        --radius-sm: 6px;
+        --radius-md: 8px;
+        --radius-lg: 12px;
+        --radius-xl: 16px;
+        --spacing-xs: 4px;
+        --spacing-sm: 8px;
+        --spacing-md: 12px;
+        --spacing-lg: 16px;
+        --spacing-xl: 20px;
+        --spacing-2xl: 24px;
+        --spacing-3xl: 32px;
+        --spacing-4xl: 40px;
       }
-      body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', Arial, sans-serif; margin: 24px; }
-      .container { max-width: 1100px; margin: 0 auto; }
-      textarea { box-sizing: border-box; display: block; width: 100%; height: 100px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; border-radius: 10px; border: 1px solid var(--border); padding: 12px; background: var(--panel); color: var(--text); }
-      pre { box-sizing: border-box; background: var(--code-bg); padding: 12px; overflow: auto; border-radius: 10px; border: 1px solid var(--border); }
-      #result { min-height: 100px; }
-      .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: stretch; }
-      .panel { border: 1px solid var(--border); border-radius: 12px; padding: 12px; background: var(--panel); box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06); }
-      .panel.stack { display: grid; grid-template-rows: auto 1fr; }
-      .panel.stack > textarea, .panel.stack > pre { height: 100%; }
-      h1 { font-size: 22px; margin: 0 0 12px 0; }
-      h3 { margin: 0 0 8px 0; font-size: 13px; text-transform: uppercase; color: var(--muted); letter-spacing: .02em; }
-      .toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
-      select { padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--panel); color: var(--text); }
-      button { padding: 8px 12px; border-radius: 10px; border: 1px solid var(--accent); background: var(--accent); color: var(--accent-text); cursor: pointer; }
-      button:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
-      label { font-size: 13px; color: var(--muted); }
-      details.panel { padding: 0; }
-      details.panel > summary { list-style: none; cursor: pointer; padding: 12px; border-bottom: 1px solid var(--border); border-radius: 12px 12px 0 0; font-weight: 600; color: var(--text); }
-      details.panel[open] > summary { border-bottom-color: var(--border); }
-      details.panel > div { padding: 12px; }
+      
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      
+      body { 
+        background: var(--bg); 
+        color: var(--text); 
+        font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', Arial, sans-serif; 
+        line-height: 1.6;
+        padding: var(--spacing-2xl);
+        min-height: 100vh;
+      }
+      
+      .container { 
+        max-width: 1200px; 
+        margin: 0 auto; 
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-2xl);
+      }
+      
+      .header {
+        text-align: center;
+        padding: var(--spacing-3xl) 0;
+        background: linear-gradient(135deg, var(--panel) 0%, var(--code-bg) 100%);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border);
+      }
+      
+      h1 { 
+        margin: 0; 
+        font-size: 2.5rem; 
+        font-weight: 700; 
+        color: var(--text);
+        background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      
+      .subtitle {
+        margin-top: var(--spacing-md);
+        color: var(--text-muted);
+        font-size: 1.1rem;
+        font-weight: 400;
+      }
+      
+      .toolbar { 
+        display: flex; 
+        align-items: center; 
+        justify-content: center;
+        gap: var(--spacing-lg); 
+        padding: var(--spacing-xl);
+        background: var(--panel);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border);
+        flex-wrap: wrap;
+      }
+      
+      .toolbar label { 
+        font-weight: 600; 
+        color: var(--text);
+        font-size: 0.95rem;
+      }
+      
+      .toolbar select { 
+        padding: var(--spacing-md) var(--spacing-lg); 
+        border: 1px solid var(--border); 
+        border-radius: var(--radius-md); 
+        background: var(--panel); 
+        color: var(--text);
+        font-size: 0.95rem;
+        min-width: 140px;
+        transition: all 0.2s ease;
+      }
+      
+      .toolbar button { 
+        padding: var(--spacing-md) var(--spacing-xl); 
+        background: var(--accent); 
+        color: white; 
+        border: none; 
+        border-radius: var(--radius-md); 
+        cursor: pointer; 
+        font-weight: 600;
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        transition: all 0.2s ease;
+        box-shadow: var(--shadow-sm);
+      }
+      
+      .toolbar button:hover { 
+        background: var(--accent-hover); 
+        transform: translateY(-2px); 
+        box-shadow: var(--shadow-md);
+      }
+      
+      .toolbar button:active { 
+        transform: translateY(0); 
+        box-shadow: var(--shadow-sm);
+      }
+      
+      .main-content {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-2xl);
+      }
+      
+      .row { 
+        display: grid; 
+        grid-template-columns: 1fr 1fr; 
+        gap: var(--spacing-xl); 
+        align-items: stretch;
+      }
+      
+      .panel { 
+        border: 1px solid var(--border); 
+        border-radius: var(--radius-lg); 
+        padding: var(--spacing-xl); 
+        background: var(--panel); 
+        box-shadow: var(--shadow-sm);
+        transition: all 0.2s ease;
+      }
+      
+      .panel:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-1px);
+      }
+      
+      .panel.stack { 
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-lg);
+      }
+      
+      .panel.stack > textarea, 
+      .panel.stack > pre { 
+        flex: 1;
+        min-height: 120px;
+      }
+      
+      h3 { 
+        margin: 0 0 var(--spacing-lg) 0; 
+        font-size: 1.1rem; 
+        font-weight: 600; 
+        color: var(--text);
+        display: flex; 
+        align-items: center; 
+        gap: var(--spacing-sm);
+        padding-bottom: var(--spacing-sm);
+        border-bottom: 2px solid var(--border);
+      }
+      
+      textarea { 
+        width: 100%; 
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; 
+        border-radius: var(--radius-md); 
+        border: 1px solid var(--border); 
+        padding: var(--spacing-lg); 
+        background: var(--panel); 
+        color: var(--text);
+        font-size: 0.95rem;
+        line-height: 1.5;
+        resize: vertical;
+        transition: all 0.2s ease;
+      }
+      
+      pre { 
+        background: var(--code-bg); 
+        padding: var(--spacing-lg); 
+        overflow: auto; 
+        border-radius: var(--radius-md); 
+        border: 1px solid var(--border);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        font-size: 0.9rem;
+        line-height: 1.5;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+      }
+      
+      #result { 
+        min-height: 120px; 
+      }
+      
+      details { 
+        border: 1px solid var(--border); 
+        border-radius: var(--radius-lg); 
+        background: var(--panel); 
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+        transition: all 0.2s ease;
+      }
+      
+      details:hover {
+        box-shadow: var(--shadow-md);
+      }
+      
+      summary { 
+        padding: var(--spacing-xl); 
+        cursor: pointer; 
+        font-weight: 600; 
+        color: var(--text); 
+        display: flex; 
+        align-items: center; 
+        gap: var(--spacing-sm);
+        transition: all 0.2s ease;
+        background: var(--code-bg);
+        border-bottom: 1px solid var(--border);
+      }
+      
+      summary:hover { 
+        background: var(--border);
+      }
+      
+      details[open] summary { 
+        border-bottom: 1px solid var(--border); 
+        background: var(--panel);
+      }
+      
+      details > div { 
+        padding: var(--spacing-xl); 
+      }
+      
+      .loading { 
+        opacity: 0.7; 
+        pointer-events: none;
+      }
+      
+      .error { 
+        border-color: var(--error) !important; 
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important; 
+      }
+      
+      .success { 
+        border-color: var(--success) !important; 
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important; 
+      }
+      
+      textarea:focus, 
+      select:focus { 
+        outline: none; 
+        border-color: var(--accent); 
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); 
+      }
+      
+      button:focus { 
+        outline: none; 
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3); 
+      }
+      
+      /* Responsive Design */
+      @media (max-width: 768px) {
+        body {
+          padding: var(--spacing-lg);
+        }
+        
+        .container {
+          gap: var(--spacing-lg);
+        }
+        
+        .row {
+          grid-template-columns: 1fr;
+          gap: var(--spacing-lg);
+        }
+        
+        .toolbar {
+          flex-direction: column;
+          align-items: stretch;
+          gap: var(--spacing-md);
+        }
+        
+        .toolbar select,
+        .toolbar button {
+          width: 100%;
+          justify-content: center;
+        }
+        
+        h1 {
+          font-size: 2rem;
+        }
+        
+        .header {
+          padding: var(--spacing-2xl) var(--spacing-lg);
+        }
+      }
+      
+      @media (max-width: 480px) {
+        body {
+          padding: var(--spacing-md);
+        }
+        
+        h1 {
+          font-size: 1.75rem;
+        }
+        
+        .panel {
+          padding: var(--spacing-lg);
+        }
+        
+        .toolbar {
+          padding: var(--spacing-lg);
+        }
+      }
+      
+      /* Smooth animations */
+      * { 
+        transition: all 0.2s ease; 
+      }
+      
+      /* Custom scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      
+      ::-webkit-scrollbar-track {
+        background: var(--code-bg);
+        border-radius: var(--radius-sm);
+      }
+      
+      ::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: var(--radius-sm);
+      }
+      
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--text-muted);
+      }
     </style>
   </head>
   <body>
     <div class="container">
-      <h1>Parser Visualizer</h1>
+      <div class="header">
+        <h1>Parser Visualizer</h1>
+        <div class="subtitle">Interactive Lexical Analysis and Parsing Tool</div>
+      </div>
+      
       <div class="toolbar">
         <label for="mode">Mode</label>
         <select id="mode">
           <option value="calc">Calculator</option>
           <option value="simple">Simple</option>
         </select>
-        <button id="run">Run</button>
+        <button id="run">
+          <i data-lucide="play"></i>
+          Run
+          <span style="font-size: 11px; opacity: 0.7; margin-left: 4px;">⌘+Enter</span>
+        </button>
       </div>
-      <div class="row" style="margin-top:12px">
-        <div class="panel stack">
-          <h3>Expression</h3>
-          <textarea id="input" placeholder="Type an expression (Calculator: 3 + 5 * (10 - 4); Simple: hello; 123)"></textarea>
-        </div>
-        <div class="panel stack">
-          <h3>Result</h3>
-          <pre id="result"></pre>
-        </div>
-      </div>
-      <div class="row" style="margin-top:12px">
-        <div class="panel stack"><h3>Tokens</h3><pre id="tokens"></pre></div>
-        <div class="panel stack"><h3>AST (JSON)</h3><pre id="ast"></pre></div>
-      </div>
-      <details id="ast-details" class="panel" style="margin-top:16px">
-        <summary>AST Diagram</summary>
-        <div>
-          <svg id="ast-svg" width="100%" height="560" viewBox="0 0 1100 560" style="background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;"></svg>
-        </div>
-      </details>
       
+      <div class="main-content">
+        <div class="row">
+          <div class="panel stack">
+            <h3>
+              <i data-lucide="edit-3"></i>
+              Expression
+            </h3>
+            <textarea id="input" placeholder="Type an expression (Calculator: 3 + 5 * (10 - 4); Simple: hello; 123)"></textarea>
+          </div>
+          <div class="panel stack">
+            <h3>
+              <i data-lucide="calculator"></i>
+              Result
+            </h3>
+            <pre id="result"></pre>
+          </div>
+        </div>
+        
+        <div class="row">
+          <div class="panel stack">
+            <h3>
+              <i data-lucide="hash"></i>
+              Tokens
+            </h3>
+            <pre id="tokens"></pre>
+          </div>
+          <div class="panel stack">
+            <h3>
+              <i data-lucide="code"></i>
+              AST (JSON)
+            </h3>
+            <pre id="ast"></pre>
+          </div>
+        </div>
+        
+        <details id="ast-details">
+          <summary>
+            <i data-lucide="tree-pine"></i>
+            AST Diagram
+          </summary>
+          <div>
+            <svg id="ast-svg" width="100%" height="560" viewBox="0 0 1100 560" style="background: var(--code-bg); border: 1px solid var(--border); border-radius: var(--radius-md);"></svg>
+          </div>
+        </details>
+      </div>
     </div>
     <script type="module" src="/web/main.ts"></script>
+    <script>
+      // Initialize Lucide icons
+      lucide.createIcons();
+    </script>
   </body>
-  </html>
+</html>
 
 

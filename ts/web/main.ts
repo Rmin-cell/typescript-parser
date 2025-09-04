@@ -65,19 +65,61 @@ const astDetails = document.getElementById("ast-details") as HTMLDetailsElement;
 function run() {
   const text = input.value.trim();
   const mode = (modeSel.value as "calc" | "simple");
-  tokens.textContent = renderTokens(text, mode);
-  ast.textContent = renderAst(text, mode);
-  result.textContent = renderResult(text, mode);
-  // Only render diagram if panel is open
-  if (astDetails.open) renderAstSvg(text, mode);
+  
+  // Add loading state
+  document.body.classList.add('loading');
+  
+  // Clear previous error states
+  input.classList.remove('error', 'success');
+  
+  try {
+    tokens.textContent = renderTokens(text, mode);
+    ast.textContent = renderAst(text, mode);
+    result.textContent = renderResult(text, mode);
+    
+    // Add success state
+    input.classList.add('success');
+    
+    // Only render diagram if panel is open
+    if (astDetails.open) renderAstSvg(text, mode);
+  } catch (error) {
+    // Add error state
+    input.classList.add('error');
+  } finally {
+    // Remove loading state
+    setTimeout(() => {
+      document.body.classList.remove('loading');
+    }, 300);
+  }
 }
 
 runBtn.addEventListener("click", run);
+
+// Add keyboard shortcut (Ctrl+Enter or Cmd+Enter)
+input.addEventListener("keydown", (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+    e.preventDefault();
+    run();
+  }
+});
+
 modeSel.addEventListener("change", () => {
   if (modeSel.value === "calc") input.value = "3 + 5 * (10 - 4)";
   else input.value = "hello; 123; x";
   run();
 });
+
+// Auto-run on input change (debounced)
+let timeoutId: number;
+input.addEventListener("input", () => {
+  clearTimeout(timeoutId);
+  timeoutId = setTimeout(() => {
+    if (input.value.trim()) {
+      run();
+    }
+  }, 500);
+});
+
 input.value = "3 + 5 * (10 - 4)";
 run();
 
