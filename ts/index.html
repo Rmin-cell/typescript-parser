@@ -3,26 +3,53 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Calc Parser Visualizer</title>
+    <title>Parser Visualizer</title>
     <style>
-      body { font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', Arial, sans-serif; margin: 24px; }
-      textarea { width: 100%; height: 90px; font-family: monospace; }
-      pre { background: #f6f8fa; padding: 12px; overflow: auto; }
+      :root {
+        --bg: #f8fafc;
+        --panel: #ffffff;
+        --border: #e5e7eb;
+        --text: #0f172a;
+        --muted: #64748b;
+        --code-bg: #f3f4f6;
+        --accent: #4f46e5;
+        --accent-hover: #4338ca;
+        --accent-text: #ffffff;
+      }
+      body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', Arial, sans-serif; margin: 24px; }
+      .container { max-width: 1100px; margin: 0 auto; }
+      textarea { width: 100%; height: 100px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; border-radius: 10px; border: 1px solid var(--border); padding: 12px; background: var(--panel); color: var(--text); }
+      pre { background: var(--code-bg); padding: 12px; overflow: auto; border-radius: 10px; border: 1px solid var(--border); }
       .row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-      .panel { border: 1px solid #e1e4e8; border-radius: 8px; padding: 12px; }
-      h3 { margin: 0 0 8px 0; font-size: 14px; text-transform: uppercase; color: #57606a; }
+      .panel { border: 1px solid var(--border); border-radius: 12px; padding: 12px; background: var(--panel); box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06); }
+      h1 { font-size: 22px; margin: 0 0 12px 0; }
+      h3 { margin: 0 0 8px 0; font-size: 13px; text-transform: uppercase; color: var(--muted); letter-spacing: .02em; }
+      .toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+      select { padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--panel); color: var(--text); }
+      button { padding: 8px 12px; border-radius: 10px; border: 1px solid var(--accent); background: var(--accent); color: var(--accent-text); cursor: pointer; }
+      button:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+      label { font-size: 13px; color: var(--muted); }
     </style>
   </head>
   <body>
-    <h2>Calculator - Scan / Parse / AST</h2>
-    <textarea id="input" placeholder="Type an expression, e.g. 3 + 5 * (10 - 4)"></textarea>
-    <button id="run">Run</button>
-    <div class="row">
-      <div class="panel"><h3>Tokens</h3><pre id="tokens"></pre></div>
-      <div class="panel"><h3>CST</h3><pre id="cst"></pre></div>
-      <div class="panel"><h3>AST</h3><pre id="ast"></pre></div>
+    <div class="container">
+      <h1>Parser Visualizer</h1>
+      <div class="toolbar">
+        <label for="mode">Mode</label>
+        <select id="mode">
+          <option value="calc">Calculator</option>
+          <option value="simple">Simple</option>
+        </select>
+        <button id="run">Run</button>
+      </div>
+      <textarea id="input" placeholder="Type an expression (Calculator: 3 + 5 * (10 - 4); Simple: hello; 123)"></textarea>
+      <div class="row" style="margin-top:12px">
+        <div class="panel"><h3>Tokens</h3><pre id="tokens"></pre></div>
+        <div class="panel"><h3>CST</h3><pre id="cst"></pre></div>
+        <div class="panel"><h3>AST</h3><pre id="ast"></pre></div>
+      </div>
+      <div class="panel" style="margin-top:16px"><h3>Output</h3><pre id="result"></pre></div>
     </div>
-    <div class="panel" style="margin-top:16px"><h3>Result</h3><pre id="result"></pre></div>
     <script type="module" src="/web/main.ts"></script>
   </body>
   </html>
