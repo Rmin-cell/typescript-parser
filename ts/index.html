@@ -458,30 +458,35 @@
         
         <!-- Compiler-specific panels -->
         <div id="compiler-panels" style="display: none;">
-          <div class="row">
-            <div class="panel stack">
-              <h3>
-                <i data-lucide="table"></i>
-                Symbol Table
-              </h3>
+          <details id="symbol-table-details">
+            <summary>
+              <i data-lucide="table"></i>
+              Symbol Table
+            </summary>
+            <div>
               <pre id="symbol-table"></pre>
             </div>
-            <div class="panel stack">
-              <h3>
-                <i data-lucide="code-2"></i>
-                Three-Address Code
-              </h3>
+          </details>
+          
+          <details id="three-address-details">
+            <summary>
+              <i data-lucide="code-2"></i>
+              Three-Address Code
+            </summary>
+            <div>
               <pre id="three-address"></pre>
             </div>
-          </div>
+          </details>
           
-          <div class="panel stack">
-            <h3>
+          <details id="cpu-code-details">
+            <summary>
               <i data-lucide="cpu"></i>
               CPU Code (Assembly-like)
-            </h3>
-            <pre id="cpu-code"></pre>
-          </div>
+            </summary>
+            <div>
+              <pre id="cpu-code"></pre>
+            </div>
+          </details>
         </div>
       </div>
     </div>

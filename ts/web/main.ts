@@ -8,6 +8,7 @@ import { parseProgram } from "../src/compiler/parser";
 import { SymbolTable } from "../src/compiler/symbol-table";
 import { IntermediateCodeGenerator } from "../src/compiler/intermediate-code";
 import { CpuCodeGenerator } from "../src/compiler/cpu-code-gen";
+import { interpretCompilerCode } from "../src/compiler/interpreter";
 
 function safeStringify(obj: any): string {
   return JSON.stringify(obj, (k, v) => {
@@ -60,11 +61,7 @@ function renderResult(text: string, mode: "calc" | "simple" | "compiler"): strin
   try {
     if (mode === "calc") return String(evalCalc(text));
     if (mode === "compiler") {
-      const parseResult = parseProgram(text);
-      if (parseResult.errors.length > 0) {
-        return "Compilation failed:\n" + parseResult.errors.map(e => e.message).join("\n");
-      }
-      return "✅ Compilation successful!";
+      return interpretCompilerCode(text);
     }
     // For simple, mirror CLI behavior: print recognized strings/numbers
     const { tokens } = parseSimple(text);
