@@ -3,6 +3,11 @@ import { buildAstFromText as buildCalcAst } from "../src/calc/ast";
 import { evaluate as evalCalc } from "../src/calc/interpreter";
 import { SimpleLexer } from "../src/simple/lexer";
 import { parse as parseSimple } from "../src/simple/parser";
+import { compilerLexer } from "../src/compiler/lexer";
+import { parseProgram } from "../src/compiler/parser";
+import { SymbolTable } from "../src/compiler/symbol-table";
+import { IntermediateCodeGenerator } from "../src/compiler/intermediate-code";
+import { CpuCodeGenerator } from "../src/compiler/cpu-code-gen";
 
 function safeStringify(obj: any): string {
   return JSON.stringify(obj, (k, v) => {
@@ -19,17 +24,31 @@ function safeStringify(obj: any): string {
   }, 2);
 }
 
-function renderTokens(text: string, mode: "calc" | "simple"): string {
-  const res = mode === "calc" ? CalcLexer.tokenize(text) : SimpleLexer.tokenize(text);
+function renderTokens(text: string, mode: "calc" | "simple" | "compiler"): string {
+  let res;
+  if (mode === "calc") {
+    res = CalcLexer.tokenize(text);
+  } else if (mode === "simple") {
+    res = SimpleLexer.tokenize(text);
+  } else {
+    res = compilerLexer.tokenize(text);
+  }
+  
   if (res.errors && res.errors.length) return "Lexing error: " + res.errors[0].message;
   return res.tokens.map((t: any) => `${t.tokenType.name}(${t.image})`).join("\n");
 }
 
-function renderAst(text: string, mode: "calc" | "simple"): string {
+function renderAst(text: string, mode: "calc" | "simple" | "compiler"): string {
   try {
     if (mode === "calc") {
       const ast = buildCalcAst(text);
       return JSON.stringify(ast, null, 2);
+    } else if (mode === "compiler") {
+      const parseResult = parseProgram(text);
+      if (parseResult.errors.length > 0) {
+        return "Parse errors:\n" + parseResult.errors.map(e => e.message).join("\n");
+      }
+      return JSON.stringify(parseResult.cst, null, 2);
     }
     return "(No AST for simple mode)";
   } catch (e: any) {
@@ -37,9 +56,16 @@ function renderAst(text: string, mode: "calc" | "simple"): string {
   }
 }
 
-function renderResult(text: string, mode: "calc" | "simple"): string {
+function renderResult(text: string, mode: "calc" | "simple" | "compiler"): string {
   try {
     if (mode === "calc") return String(evalCalc(text));
+    if (mode === "compiler") {
+      const parseResult = parseProgram(text);
+      if (parseResult.errors.length > 0) {
+        return "Compilation failed:\n" + parseResult.errors.map(e => e.message).join("\n");
+      }
+      return "✅ Compilation successful!";
+    }
     // For simple, mirror CLI behavior: print recognized strings/numbers
     const { tokens } = parseSimple(text);
     const lines: string[] = [];
@@ -62,9 +88,22 @@ const modeSel = document.getElementById("mode") as HTMLSelectElement;
 const svg = document.getElementById("ast-svg") as SVGSVGElement;
 const astDetails = document.getElementById("ast-details") as HTMLDetailsElement;
 
+// Compiler-specific elements
+const compilerPanels = document.getElementById("compiler-panels") as HTMLDivElement;
+const symbolTable = document.getElementById("symbol-table") as HTMLPreElement;
+const threeAddress = document.getElementById("three-address") as HTMLPreElement;
+const cpuCode = document.getElementById("cpu-code") as HTMLPreElement;
+
 function run() {
   const text = input.value.trim();
-  const mode = (modeSel.value as "calc" | "simple");
+  const mode = (modeSel.value as "calc" | "simple" | "compiler");
+  
+  // Show/hide compiler panels based on mode
+  if (mode === "compiler") {
+    compilerPanels.style.display = "block";
+  } else {
+    compilerPanels.style.display = "none";
+  }
   
   // Add loading state
   document.body.classList.add('loading');
@@ -76,6 +115,11 @@ function run() {
     tokens.textContent = renderTokens(text, mode);
     ast.textContent = renderAst(text, mode);
     result.textContent = renderResult(text, mode);
+    
+    // Compiler-specific rendering
+    if (mode === "compiler") {
+      renderCompilerOutput(text);
+    }
     
     // Add success state
     input.classList.add('success');
@@ -103,9 +147,113 @@ input.addEventListener("keydown", (e) => {
   }
 });
 
+function renderCompilerOutput(text: string): void {
+  try {
+    const parseResult = parseProgram(text);
+    if (parseResult.errors.length > 0) {
+      symbolTable.textContent = "Parse errors - no symbol table generated";
+      threeAddress.textContent = "Parse errors - no intermediate code generated";
+      cpuCode.textContent = "Parse errors - no CPU code generated";
+      return;
+    }
+    
+    // Generate symbol table
+    const symTable = new SymbolTable();
+    const symbols = symTable.getAllSymbols();
+    if (symbols.length === 0) {
+      symbolTable.textContent = "(No symbols declared)";
+    } else {
+      symbolTable.textContent = symbols.map(s => 
+        `${s.name.padEnd(15)} | ${(s.isFunction ? 'function' : 'variable').padEnd(8)} | ${s.type.padEnd(8)}${s.parameters ? `(${s.parameters.join(', ')})` : ''}${s.address !== undefined ? ` @${s.address}` : ''}`
+      ).join('\n');
+    }
+    
+    // Generate intermediate code
+    const intermediateGen = new IntermediateCodeGenerator(symTable);
+    const threeAddressCode = intermediateGen.generate(parseResult.cst);
+    if (threeAddressCode.length === 0) {
+      threeAddress.textContent = "(No instructions generated)";
+    } else {
+      threeAddress.textContent = threeAddressCode.map((instruction, index) => {
+        const line = `${(index + 1).toString().padStart(3)}. `;
+        switch (instruction.type) {
+          case 'ASSIGN': return `${line}${instruction.target} = ${instruction.source}`;
+          case 'ADD': return `${line}${instruction.target} = ${instruction.left} + ${instruction.right}`;
+          case 'SUB': return `${line}${instruction.target} = ${instruction.left} - ${instruction.right}`;
+          case 'MUL': return `${line}${instruction.target} = ${instruction.left} * ${instruction.right}`;
+          case 'DIV': return `${line}${instruction.target} = ${instruction.left} / ${instruction.right}`;
+          case 'MOD': return `${line}${instruction.target} = ${instruction.left} % ${instruction.right}`;
+          case 'EQ': return `${line}${instruction.target} = ${instruction.left} == ${instruction.right}`;
+          case 'NE': return `${line}${instruction.target} = ${instruction.left} != ${instruction.right}`;
+          case 'LT': return `${line}${instruction.target} = ${instruction.left} < ${instruction.right}`;
+          case 'GT': return `${line}${instruction.target} = ${instruction.left} > ${instruction.right}`;
+          case 'LE': return `${line}${instruction.target} = ${instruction.left} <= ${instruction.right}`;
+          case 'GE': return `${line}${instruction.target} = ${instruction.left} >= ${instruction.right}`;
+          case 'AND': return `${line}${instruction.target} = ${instruction.left} && ${instruction.right}`;
+          case 'OR': return `${line}${instruction.target} = ${instruction.left} || ${instruction.right}`;
+          case 'NOT': return `${line}${instruction.target} = !${instruction.source}`;
+          case 'NEG': return `${line}${instruction.target} = -${instruction.source}`;
+          case 'LABEL': return `${line}${instruction.name}:`;
+          case 'JUMP': return `${line}goto ${instruction.target}`;
+          case 'JUMP_IF_FALSE': return `${line}if (!${instruction.condition}) goto ${instruction.target}`;
+          case 'JUMP_IF_TRUE': return `${line}if (${instruction.condition}) goto ${instruction.target}`;
+          case 'CALL': return `${line}${instruction.target} = call ${instruction.function}(${instruction.args.join(', ')})`;
+          case 'RETURN': return instruction.value ? `${line}return ${instruction.value}` : `${line}return`;
+          case 'PRINT': return `${line}print ${instruction.value}`;
+          case 'FUNCTION_START': return `${line}function ${instruction.name}(${instruction.params.join(', ')}) {`;
+          case 'FUNCTION_END': return `${line}}`;
+          default: return `${line}${instruction.type}`;
+        }
+      }).join('\n');
+    }
+    
+    // Generate CPU code
+    const cpuGen = new CpuCodeGenerator(symTable);
+    const cpuInstructions = cpuGen.generate(threeAddressCode);
+    if (cpuInstructions.length === 0) {
+      cpuCode.textContent = "(No CPU instructions generated)";
+    } else {
+      cpuCode.textContent = cpuInstructions.map((instruction, index) => {
+        const line = `${(index + 1).toString().padStart(3)}. `;
+        switch (instruction.type) {
+          case 'LOAD': return `${line}LOAD ${instruction.reg}, ${instruction.value}`;
+          case 'STORE': return `${line}STORE ${instruction.reg}, ${instruction.address}`;
+          case 'ADD': return `${line}ADD ${instruction.reg}, ${instruction.left}, ${instruction.right}`;
+          case 'SUB': return `${line}SUB ${instruction.reg}, ${instruction.left}, ${instruction.right}`;
+          case 'MUL': return `${line}MUL ${instruction.reg}, ${instruction.left}, ${instruction.right}`;
+          case 'DIV': return `${line}DIV ${instruction.reg}, ${instruction.left}, ${instruction.right}`;
+          case 'MOD': return `${line}MOD ${instruction.reg}, ${instruction.left}, ${instruction.right}`;
+          case 'CMP': return `${line}CMP ${instruction.left}, ${instruction.right}`;
+          case 'JE': return `${line}JE ${instruction.target}`;
+          case 'JNE': return `${line}JNE ${instruction.target}`;
+          case 'JL': return `${line}JL ${instruction.target}`;
+          case 'JG': return `${line}JG ${instruction.target}`;
+          case 'JLE': return `${line}JLE ${instruction.target}`;
+          case 'JGE': return `${line}JGE ${instruction.target}`;
+          case 'JMP': return `${line}JMP ${instruction.target}`;
+          case 'CALL': return `${line}CALL ${instruction.target}`;
+          case 'RET': return `${line}RET`;
+          case 'PUSH': return `${line}PUSH ${instruction.value}`;
+          case 'POP': return `${line}POP ${instruction.reg}`;
+          case 'PRINT': return `${line}PRINT ${instruction.reg}`;
+          case 'LABEL': return `${line}${instruction.name}:`;
+          case 'FUNCTION_START': return `${line}${instruction.name}:`;
+          case 'FUNCTION_END': return `${line}RET`;
+          default: return `${line}${instruction.type}`;
+        }
+      }).join('\n');
+    }
+  } catch (error: any) {
+    symbolTable.textContent = `Error: ${error.message}`;
+    threeAddress.textContent = `Error: ${error.message}`;
+    cpuCode.textContent = `Error: ${error.message}`;
+  }
+}
+
 modeSel.addEventListener("change", () => {
   if (modeSel.value === "calc") input.value = "3 + 5 * (10 - 4)";
-  else input.value = "hello; 123; x";
+  else if (modeSel.value === "simple") input.value = "hello; 123; x";
+  else if (modeSel.value === "compiler") input.value = "let x = 10\nlet y = 5\nlet result = x + y * 2\nprint result";
   run();
 });
 
@@ -184,7 +332,7 @@ function layoutAndDraw(node: AstNode | undefined, x: number, y: number, spread: 
   }
 }
 
-function renderAstSvg(text: string, mode: "calc" | "simple") {
+function renderAstSvg(text: string, mode: "calc" | "simple" | "compiler") {
   clearSvg();
   if (mode !== "calc") return; // diagram only for calculator AST
   try {

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Parser Visualizer</title>
+    <title>Compiler Visualizer</title>
     <!-- Tailwind CSS for better styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons for better icons -->
@@ -376,7 +376,7 @@
   <body>
     <div class="container">
       <div class="header">
-        <h1>Parser Visualizer</h1>
+        <h1>Compiler Visualizer</h1>
         <div class="subtitle">Interactive Lexical Analysis and Parsing Tool</div>
       </div>
       
@@ -385,6 +385,7 @@
         <select id="mode">
           <option value="calc">Calculator</option>
           <option value="simple">Simple</option>
+          <option value="compiler">Compiler</option>
         </select>
         <button id="run">
           <i data-lucide="play"></i>
@@ -400,7 +401,7 @@
               <i data-lucide="edit-3"></i>
               Expression
             </h3>
-            <textarea id="input" placeholder="Type an expression (Calculator: 3 + 5 * (10 - 4); Simple: hello; 123)"></textarea>
+            <textarea id="input" placeholder="Type an expression (Calculator: 3 + 5 * (10 - 4); Simple: hello; 123; Compiler: let x = 10; print x)"></textarea>
           </div>
           <div class="panel stack">
             <h3>
@@ -437,6 +438,34 @@
             <svg id="ast-svg" width="100%" height="560" viewBox="0 0 1100 560" style="background: var(--code-bg); border: 1px solid var(--border); border-radius: var(--radius-md);"></svg>
           </div>
         </details>
+        
+        <!-- Compiler-specific panels -->
+        <div id="compiler-panels" style="display: none;">
+          <div class="row">
+            <div class="panel stack">
+              <h3>
+                <i data-lucide="table"></i>
+                Symbol Table
+              </h3>
+              <pre id="symbol-table"></pre>
+            </div>
+            <div class="panel stack">
+              <h3>
+                <i data-lucide="code-2"></i>
+                Three-Address Code
+              </h3>
+              <pre id="three-address"></pre>
+            </div>
+          </div>
+          
+          <div class="panel stack">
+            <h3>
+              <i data-lucide="cpu"></i>
+              CPU Code (Assembly-like)
+            </h3>
+            <pre id="cpu-code"></pre>
+          </div>
+        </div>
       </div>
     </div>
     <script type="module" src="/web/main.ts"></script>
