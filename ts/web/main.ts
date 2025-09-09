@@ -6,7 +6,7 @@ import { parse as parseSimple } from "../src/simple/parser";
 import { compilerLexer } from "../src/compiler/lexer";
 import { parseProgram } from "../src/compiler/parser";
 import { SymbolTable } from "../src/compiler/symbol-table";
-import { IntermediateCodeGenerator } from "../src/compiler/intermediate-code";
+import { SimpleIntermediateCodeGenerator } from "../src/compiler/simple-intermediate-code";
 import { CpuCodeGenerator } from "../src/compiler/cpu-code-gen";
 import { interpretCompilerCode } from "../src/compiler/interpreter";
 
@@ -163,8 +163,12 @@ function renderCompilerOutput(text: string): void {
       return;
     }
     
-    // Generate symbol table
+    // Generate symbol table and intermediate code
     const symTable = new SymbolTable();
+    const intermediateGen = new SimpleIntermediateCodeGenerator(symTable);
+    const threeAddressCode = intermediateGen.generate(parseResult.cst);
+    
+    // Get symbols from the populated symbol table
     const symbols = symTable.getAllSymbols();
     if (symbols.length === 0) {
       symbolTable.textContent = "(No symbols declared)";
@@ -173,10 +177,6 @@ function renderCompilerOutput(text: string): void {
         `${s.name.padEnd(15)} | ${(s.isFunction ? 'function' : 'variable').padEnd(8)} | ${s.type.padEnd(8)}${s.parameters ? `(${s.parameters.join(', ')})` : ''}${s.address !== undefined ? ` @${s.address}` : ''}`
       ).join('\n');
     }
-    
-    // Generate intermediate code
-    const intermediateGen = new IntermediateCodeGenerator(symTable);
-    const threeAddressCode = intermediateGen.generate(parseResult.cst);
     if (threeAddressCode.length === 0) {
       threeAddress.textContent = "(No instructions generated)";
     } else {

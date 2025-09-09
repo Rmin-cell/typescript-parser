@@ -46,6 +46,30 @@ export class IntermediateCodeGenerator {
     return `L${this.labelCounter++}`;
   }
 
+  private inferTypeFromExpression(exprCtx: any): DataType {
+    if (exprCtx.children.NumberLiteral) {
+      return "number";
+    } else if (exprCtx.children.StringLiteral) {
+      return "string";
+    } else if (exprCtx.children.BooleanLiteral) {
+      return "boolean";
+    } else if (exprCtx.children.Identifier) {
+      // Look up existing variable type
+      const varName = exprCtx.children.Identifier[0].image;
+      const symbol = this.symbolTable.lookup(varName);
+      return symbol ? symbol.type : "number"; // Default to number if not found
+    } else if (exprCtx.children.expression) {
+      // Parenthesized expression
+      return this.inferTypeFromExpression(exprCtx.children.expression[0]);
+    } else if (exprCtx.children.functionCall) {
+      // Function call - assume returns number for now
+      return "number";
+    } else {
+      // For arithmetic/logical operations, assume number
+      return "number";
+    }
+  }
+
   generate(cst: CstNode): ThreeAddressInstruction[] {
     this.instructions = [];
     this.tempCounter = 0;
@@ -60,41 +84,48 @@ export class IntermediateCodeGenerator {
   }
 
   private visitProgram(ctx: any): void {
-    if (ctx.statement) {
-      for (const stmt of ctx.statement) {
+    if (ctx.children && ctx.children.statement) {
+      for (const stmt of ctx.children.statement) {
         this.visitStatement(stmt);
       }
     }
   }
 
   private visitStatement(ctx: any): void {
-    if (ctx.variableDeclaration) {
-      this.visitVariableDeclaration(ctx.variableDeclaration[0]);
-    } else if (ctx.assignment) {
-      this.visitAssignment(ctx.assignment[0]);
-    } else if (ctx.ifStatement) {
-      this.visitIfStatement(ctx.ifStatement[0]);
-    } else if (ctx.whileStatement) {
-      this.visitWhileStatement(ctx.whileStatement[0]);
-    } else if (ctx.functionDeclaration) {
-      this.visitFunctionDeclaration(ctx.functionDeclaration[0]);
-    } else if (ctx.returnStatement) {
-      this.visitReturnStatement(ctx.returnStatement[0]);
-    } else if (ctx.printStatement) {
-      this.visitPrintStatement(ctx.printStatement[0]);
-    } else if (ctx.expressionStatement) {
-      this.visitExpression(ctx.expressionStatement[0]);
+    if (ctx.children) {
+      if (ctx.children.variableDeclaration) {
+        this.visitVariableDeclaration(ctx.children.variableDeclaration[0]);
+      } else if (ctx.children.assignment) {
+        this.visitAssignment(ctx.children.assignment[0]);
+      } else if (ctx.children.ifStatement) {
+        this.visitIfStatement(ctx.children.ifStatement[0]);
+      } else if (ctx.children.whileStatement) {
+        this.visitWhileStatement(ctx.children.whileStatement[0]);
+      } else if (ctx.children.functionDeclaration) {
+        this.visitFunctionDeclaration(ctx.children.functionDeclaration[0]);
+      } else if (ctx.children.returnStatement) {
+        this.visitReturnStatement(ctx.children.returnStatement[0]);
+      } else if (ctx.children.printStatement) {
+        this.visitPrintStatement(ctx.children.printStatement[0]);
+      } else if (ctx.children.expressionStatement) {
+        this.visitExpression(ctx.children.expressionStatement[0]);
+      }
     }
   }
 
   private visitVariableDeclaration(ctx: any): void {
-    const varName = ctx.Identifier[0].image;
-    const exprResult = this.visitExpression(ctx.expression[0]);
-    
-    // Declare variable in symbol table
-    this.symbolTable.declareVariable(varName, "number"); // Default type
-    
-    this.emit({ type: "ASSIGN", target: varName, source: exprResult });
+    if (ctx.children) {
+      const varName = ctx.children.Identifier[0].image;
+      const exprResult = this.visitExpression(ctx.children.expression[0]);
+      
+      // Determine variable type from expression
+      const varType = this.inferTypeFromExpression(ctx.children.expression[0]);
+      
+      // Declare variable in symbol table
+      this.symbolTable.declareVariable(varName, varType);
+      
+      this.emit({ type: "ASSIGN", target: varName, source: exprResult });
+    }
   }
 
   private visitAssignment(ctx: any): void {
@@ -158,12 +189,17 @@ export class IntermediateCodeGenerator {
   private visitFunctionDeclaration(ctx: any): void {
     const funcName = ctx.Identifier[0].image;
     const params: string[] = [];
+    const paramTypes: DataType[] = [];
     
     if (ctx.parameterList) {
       for (const param of ctx.parameterList[0].Identifier) {
         params.push(param.image);
+        paramTypes.push("number"); // Default parameter type
       }
     }
+    
+    // Declare function in symbol table
+    this.symbolTable.declareFunction(funcName, "number", paramTypes); // Default return type
     
     this.emit({ type: "FUNCTION_START", name: funcName, params });
     
@@ -192,7 +228,11 @@ export class IntermediateCodeGenerator {
   }
 
   private visitExpression(ctx: any): string {
-    return this.visitLogicalOr(ctx.logicalOr[0]);
+    console.log("visitExpression called with:", ctx);
+    if (ctx.children && ctx.children.logicalOr) {
+      return this.visitLogicalOr(ctx.children.logicalOr[0]);
+    }
+    return "0"; // fallback
   }
 
   private visitLogicalOr(ctx: any): string {

@@ -37,13 +37,15 @@ export class SymbolTable {
       throw new Error(`Variable '${name}' already declared in current scope`);
     }
     
-    this.symbols.set(name, {
+    const symbol = {
       name,
       type,
       scope: this.currentScope,
       isFunction: false,
       address: this.nextAddress++
-    });
+    };
+    
+    this.symbols.set(name, symbol);
   }
 
   declareFunction(name: string, returnType: DataType, parameters: DataType[]): void {
