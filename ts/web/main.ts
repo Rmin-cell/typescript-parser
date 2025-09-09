@@ -99,11 +99,19 @@ function run() {
   const text = input.value.trim();
   const mode = (modeSel.value as "calc" | "simple" | "compiler");
   
-  // Show/hide compiler panels based on mode
+  // Show/hide panels based on mode
   if (mode === "compiler") {
     compilerPanels.style.display = "block";
-  } else {
+    astDetails.style.display = "none";
+    astDiagramDetails.style.display = "none";
+  } else if (mode === "simple") {
     compilerPanels.style.display = "none";
+    astDetails.style.display = "none";
+    astDiagramDetails.style.display = "none";
+  } else { // calc mode
+    compilerPanels.style.display = "none";
+    astDetails.style.display = "block";
+    astDiagramDetails.style.display = "block";
   }
   
   // Add loading state
@@ -257,6 +265,27 @@ modeSel.addEventListener("change", () => {
   else if (modeSel.value === "compiler") input.value = "let x = 10\nlet y = 5\nlet result = x + y * 2\nprint result";
   run();
 });
+
+// Initialize panels on page load
+function initializePanels() {
+  const mode = (modeSel.value as "calc" | "simple" | "compiler");
+  if (mode === "compiler") {
+    compilerPanels.style.display = "block";
+    astDetails.style.display = "none";
+    astDiagramDetails.style.display = "none";
+  } else if (mode === "simple") {
+    compilerPanels.style.display = "none";
+    astDetails.style.display = "none";
+    astDiagramDetails.style.display = "none";
+  } else { // calc mode
+    compilerPanels.style.display = "none";
+    astDetails.style.display = "block";
+    astDiagramDetails.style.display = "block";
+  }
+}
+
+// Initialize on page load
+initializePanels();
 
 // Auto-run on input change (debounced)
 let timeoutId: number;
