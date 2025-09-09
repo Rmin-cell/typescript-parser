@@ -87,6 +87,7 @@ const runBtn = document.getElementById("run") as HTMLButtonElement;
 const modeSel = document.getElementById("mode") as HTMLSelectElement;
 const svg = document.getElementById("ast-svg") as SVGSVGElement;
 const astDetails = document.getElementById("ast-details") as HTMLDetailsElement;
+const astDiagramDetails = document.getElementById("ast-diagram-details") as HTMLDetailsElement;
 
 // Compiler-specific elements
 const compilerPanels = document.getElementById("compiler-panels") as HTMLDivElement;
@@ -125,7 +126,7 @@ function run() {
     input.classList.add('success');
     
     // Only render diagram if panel is open
-    if (astDetails.open) renderAstSvg(text, mode);
+    if (astDiagramDetails.open) renderAstSvg(text, mode);
   } catch (error) {
     // Add error state
     input.classList.add('error');
@@ -345,8 +346,8 @@ function renderAstSvg(text: string, mode: "calc" | "simple" | "compiler") {
 }
 
 // Re-render when AST details toggled
-astDetails.addEventListener("toggle", () => {
-  if (astDetails.open) renderAstSvg(input.value.trim(), modeSel.value as any);
+astDiagramDetails.addEventListener("toggle", () => {
+  if (astDiagramDetails.open) renderAstSvg(input.value.trim(), modeSel.value as any);
 });
 
 

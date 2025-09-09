@@ -227,44 +227,58 @@
         min-height: 120px; 
       }
       
-      details { 
-        border: 1px solid var(--border); 
-        border-radius: var(--radius-lg); 
-        background: var(--panel); 
+      details {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        margin: var(--spacing-md) 0;
         box-shadow: var(--shadow-sm);
         overflow: hidden;
-        transition: all 0.2s ease;
       }
       
-      details:hover {
-        box-shadow: var(--shadow-md);
-      }
-      
-      summary { 
-        padding: var(--spacing-xl); 
-        cursor: pointer; 
-        font-weight: 600; 
-        color: var(--text); 
-        display: flex; 
-        align-items: center; 
-        gap: var(--spacing-sm);
-        transition: all 0.2s ease;
-        background: var(--code-bg);
-        border-bottom: 1px solid var(--border);
-      }
-      
-      summary:hover { 
-        background: var(--border);
-      }
-      
-      details[open] summary { 
-        border-bottom: 1px solid var(--border); 
+      details summary {
+        padding: var(--spacing-lg);
         background: var(--panel);
+        border-bottom: 1px solid var(--border);
+        cursor: pointer;
+        font-weight: 600;
+        color: var(--text);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        transition: background-color 0.2s ease;
+        list-style: none;
       }
       
-      details > div { 
-        padding: var(--spacing-xl); 
+      details summary:hover {
+        background: var(--hover);
       }
+      
+      details summary::-webkit-details-marker {
+        display: none;
+      }
+      
+      details summary::before {
+        content: "▶";
+        transition: transform 0.2s ease;
+        margin-right: var(--spacing-xs);
+      }
+      
+      details[open] summary::before {
+        transform: rotate(90deg);
+      }
+      
+      details > div {
+        padding: var(--spacing-lg);
+      }
+      
+      details pre {
+        margin: 0;
+        background: var(--code-bg);
+        border: none;
+        border-radius: var(--radius-md);
+      }
+      
       
       .loading { 
         opacity: 0.7; 
@@ -412,24 +426,27 @@
           </div>
         </div>
         
-        <div class="row">
-          <div class="panel stack">
-            <h3>
-              <i data-lucide="hash"></i>
-              Tokens
-            </h3>
+        <details id="tokens-details">
+          <summary>
+            <i data-lucide="hash"></i>
+            Tokens
+          </summary>
+          <div>
             <pre id="tokens"></pre>
           </div>
-          <div class="panel stack">
-            <h3>
-              <i data-lucide="code"></i>
-              AST (JSON)
-            </h3>
-            <pre id="ast"></pre>
-          </div>
-        </div>
+        </details>
         
         <details id="ast-details">
+          <summary>
+            <i data-lucide="code"></i>
+            AST (JSON)
+          </summary>
+          <div>
+            <pre id="ast"></pre>
+          </div>
+        </details>
+        
+        <details id="ast-diagram-details">
           <summary>
             <i data-lucide="tree-pine"></i>
             AST Diagram
