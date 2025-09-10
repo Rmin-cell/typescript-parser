@@ -637,3 +637,43 @@ class CodeEditor {
 // Initialize enhanced code editor
 const codeEditor = new CodeEditor(input);
 
+// Example buttons functionality
+function initializeExampleButtons() {
+  const exampleButtons = document.querySelectorAll('.example-btn');
+  
+  exampleButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      const code = button.getAttribute('data-code');
+      const mode = button.getAttribute('data-mode');
+      
+      if (code && mode) {
+        // Decode HTML entities in the code
+        const decodedCode = code.replace(/&#10;/g, '\n').replace(/&quot;/g, '"');
+        
+        // Set the code in the textarea
+        input.value = decodedCode;
+        
+        // Switch to the appropriate mode
+        modeSel.value = mode;
+        
+        // Update line numbers by triggering input event
+        input.dispatchEvent(new Event('input'));
+        
+        // Trigger the run function
+        run();
+        
+        // Add a subtle animation to show the button was clicked
+        (button as HTMLElement).style.transform = 'scale(0.95)';
+        setTimeout(() => {
+          (button as HTMLElement).style.transform = '';
+        }, 150);
+      }
+    });
+  });
+}
+
+// Initialize example buttons when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+  initializeExampleButtons();
+});
+

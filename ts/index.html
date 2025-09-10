@@ -305,6 +305,116 @@
         font-size: 12px;
         margin-left: var(--spacing-sm);
       }
+
+      /* Examples Section Styles */
+      .examples-section {
+        background: var(--panel);
+        border-radius: var(--radius-lg);
+        padding: var(--spacing-xl);
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border);
+        margin-bottom: var(--spacing-2xl);
+      }
+
+      .examples-section h3 {
+        margin: 0 0 var(--spacing-lg) 0;
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--text);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        padding-bottom: var(--spacing-sm);
+        border-bottom: 2px solid var(--border);
+      }
+
+      .examples-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: var(--spacing-xl);
+      }
+
+      .example-category {
+        background: var(--code-bg);
+        border-radius: var(--radius-md);
+        padding: var(--spacing-lg);
+        border: 1px solid var(--border);
+      }
+
+      .example-category h4 {
+        margin: 0 0 var(--spacing-md) 0;
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--accent);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .example-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--spacing-sm);
+      }
+
+      .example-btn {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: var(--spacing-sm) var(--spacing-md);
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: var(--text);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+      }
+
+      .example-btn:hover {
+        background: var(--accent);
+        color: white;
+        border-color: var(--accent);
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-md);
+      }
+
+      .example-btn:active {
+        transform: translateY(0);
+        box-shadow: var(--shadow-sm);
+      }
+
+      .example-btn[data-mode="calc"]:hover {
+        background: var(--success);
+        border-color: var(--success);
+      }
+
+      .example-btn[data-mode="simple"]:hover {
+        background: var(--warning);
+        border-color: var(--warning);
+      }
+
+      .example-btn[data-mode="compiler"]:hover {
+        background: var(--accent);
+        border-color: var(--accent);
+      }
+
+      /* Responsive adjustments for examples */
+      @media (max-width: 768px) {
+        .examples-grid {
+          grid-template-columns: 1fr;
+          gap: var(--spacing-lg);
+        }
+        
+        .example-buttons {
+          flex-direction: column;
+        }
+        
+        .example-btn {
+          justify-content: center;
+        }
+      }
       
       pre { 
         background: var(--code-bg); 
@@ -575,6 +685,44 @@
           Run
           <span style="font-size: 11px; opacity: 0.7; margin-left: 4px;">⌘+Enter</span>
         </button>
+      </div>
+      
+      <!-- Example Code Snippets -->
+      <div class="examples-section">
+        <h3>
+          <i data-lucide="lightbulb"></i>
+          Try These Examples
+        </h3>
+        <div class="examples-grid">
+          <div class="example-category">
+            <h4>Calculator Mode</h4>
+            <div class="example-buttons">
+              <button class="example-btn" data-code="3 + 5 * (10 - 4)" data-mode="calc">Basic Math</button>
+              <button class="example-btn" data-code="(2 + 3) * 4 - 1" data-mode="calc">Complex Expression</button>
+              <button class="example-btn" data-code="10 / 2 + 3 * 4" data-mode="calc">Order of Operations</button>
+            </div>
+          </div>
+          
+          <div class="example-category">
+            <h4>Simple Mode</h4>
+            <div class="example-buttons">
+              <button class="example-btn" data-code="hello" data-mode="simple">String</button>
+              <button class="example-btn" data-code="123" data-mode="simple">Number</button>
+              <button class="example-btn" data-code="true" data-mode="simple">Boolean</button>
+            </div>
+          </div>
+          
+          <div class="example-category">
+            <h4>Compiler Mode</h4>
+            <div class="example-buttons">
+              <button class="example-btn" data-code="let x = 10&#10;print x" data-mode="compiler">Variables</button>
+              <button class="example-btn" data-code="let age = 18&#10;if (age >= 18) {&#10;    print &quot;Adult&quot;&#10;} else {&#10;    print &quot;Minor&quot;&#10;}" data-mode="compiler">If-Else</button>
+              <button class="example-btn" data-code="let i = 0&#10;while (i < 3) {&#10;    print i&#10;    i = i + 1&#10;}" data-mode="compiler">While Loop</button>
+              <button class="example-btn" data-code="function add(a, b) {&#10;    return a + b&#10;}&#10;let result = add(5, 3)&#10;print result" data-mode="compiler">Functions</button>
+              <button class="example-btn" data-code="let a = 10&#10;let b = 5&#10;let result = (a + b) * 2&#10;print result" data-mode="compiler">Expressions</button>
+            </div>
+          </div>
+        </div>
       </div>
       
       <div class="main-content">
