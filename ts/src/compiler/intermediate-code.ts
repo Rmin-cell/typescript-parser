@@ -134,36 +134,28 @@ export class IntermediateCodeGenerator {
   }
 
   private visitAssignment(ctx: any): void {
-    if (ctx.Identifier && ctx.Identifier.length > 0) {
-      const varName = ctx.Identifier[0].image;
-      
-      // Check both possible CST structures
-      let expressionCtx;
-      if (ctx.children && ctx.children.expression) {
-        expressionCtx = ctx.children.expression[0];
-      } else if (ctx.expression) {
-        expressionCtx = ctx.expression[0];
-      }
-      
-      if (expressionCtx) {
-        const exprResult = this.visitExpression(expressionCtx);
-        this.emit({ type: "ASSIGN", target: varName, source: exprResult });
-      }
+    // Unified CST access: always use ctx.children.*
+    if (!ctx.children || !ctx.children.Identifier) {
+      return;
+    }
+    
+    const varName = ctx.children.Identifier[0].image;
+    const expressionCtx = ctx.children.expression?.[0];
+    
+    if (expressionCtx) {
+      const exprResult = this.visitExpression(expressionCtx);
+      this.emit({ type: "ASSIGN", target: varName, source: exprResult });
     }
   }
 
   private visitIfStatement(ctx: any): void {
-    console.log("visitIfStatement called with:", ctx);
-    console.log("ctx.children:", ctx.children);
-    
-    // Check both possible CST structures for expression
-    let expressionCtx;
-    if (ctx.children && ctx.children.expression) {
-      expressionCtx = ctx.children.expression[0];
-    } else if (ctx.expression) {
-      expressionCtx = ctx.expression[0];
+    // Unified CST access: always use ctx.children.*
+    if (!ctx.children) {
+      return;
     }
     
+    // Get expression
+    const expressionCtx = ctx.children.expression?.[0];
     if (!expressionCtx) {
       return;
     }
@@ -172,15 +164,10 @@ export class IntermediateCodeGenerator {
     const elseLabel = this.newLabel();
     const endLabel = this.newLabel();
     
-    console.log("If condition result:", conditionResult);
-    console.log("Else label:", elseLabel);
-    console.log("End label:", endLabel);
-    
     this.emit({ type: "JUMP_IF_FALSE", condition: conditionResult, target: elseLabel });
     
-    // Then block - use correct CST access
-    console.log("Processing then block, ctx.children.statement:", ctx.children?.statement);
-    if (ctx.children && ctx.children.statement) {
+    // Then block
+    if (ctx.children.statement) {
       for (const stmt of ctx.children.statement) {
         this.visitStatement(stmt);
       }
@@ -189,9 +176,8 @@ export class IntermediateCodeGenerator {
     this.emit({ type: "JUMP", target: endLabel });
     this.emit({ type: "LABEL", name: elseLabel });
     
-    // Else block (if exists) - check for statement2
-    console.log("Processing else block, ctx.children.statement2:", ctx.children?.statement2);
-    if (ctx.children && ctx.children.statement2) {
+    // Else block
+    if (ctx.children.statement2) {
       for (const stmt of ctx.children.statement2) {
         this.visitStatement(stmt);
       }
@@ -201,19 +187,18 @@ export class IntermediateCodeGenerator {
   }
 
   private visitWhileStatement(ctx: any): void {
+    // Unified CST access: always use ctx.children.*
+    if (!ctx.children) {
+      return;
+    }
+    
     const startLabel = this.newLabel();
     const endLabel = this.newLabel();
     
     this.emit({ type: "LABEL", name: startLabel });
     
-    // Check both possible CST structures for expression
-    let expressionCtx;
-    if (ctx.children && ctx.children.expression) {
-      expressionCtx = ctx.children.expression[0];
-    } else if (ctx.expression) {
-      expressionCtx = ctx.expression[0];
-    }
-    
+    // Get expression
+    const expressionCtx = ctx.children.expression?.[0];
     if (!expressionCtx) {
       return;
     }
@@ -221,8 +206,8 @@ export class IntermediateCodeGenerator {
     const conditionResult = this.visitExpression(expressionCtx);
     this.emit({ type: "JUMP_IF_FALSE", condition: conditionResult, target: endLabel });
     
-    // Loop body - use correct CST access
-    if (ctx.children && ctx.children.statement) {
+    // Loop body
+    if (ctx.children.statement) {
       for (const stmt of ctx.children.statement) {
         this.visitStatement(stmt);
       }
@@ -233,11 +218,8 @@ export class IntermediateCodeGenerator {
   }
 
   private visitFunctionDeclaration(ctx: any): void {
-    console.log("visitFunctionDeclaration called with:", ctx);
-    console.log("ctx.children:", ctx.children);
-    
+    // Unified CST access: always use ctx.children.*
     if (!ctx.children || !ctx.children.Identifier) {
-      console.log("No Identifier found in function declaration");
       return;
     }
     
@@ -245,10 +227,7 @@ export class IntermediateCodeGenerator {
     const params: string[] = [];
     const paramTypes: DataType[] = [];
     
-    console.log("Function name:", funcName);
-    
     if (ctx.children.parameterList && ctx.children.parameterList.length > 0) {
-      console.log("Parameter list found:", ctx.children.parameterList[0]);
       if (ctx.children.parameterList[0].children && ctx.children.parameterList[0].children.Identifier) {
         for (const param of ctx.children.parameterList[0].children.Identifier) {
           params.push(param.image);
@@ -257,15 +236,13 @@ export class IntermediateCodeGenerator {
       }
     }
     
-    console.log("Function parameters:", params);
-    
     // Declare function in symbol table
     this.symbolTable.declareFunction(funcName, "number", paramTypes); // Default return type
     
     this.emit({ type: "FUNCTION_START", name: funcName, params });
     
-    // Function body - use correct CST access
-    if (ctx.children && ctx.children.statement) {
+    // Function body
+    if (ctx.children.statement) {
       for (const stmt of ctx.children.statement) {
         this.visitStatement(stmt);
       }
@@ -275,14 +252,13 @@ export class IntermediateCodeGenerator {
   }
 
   private visitReturnStatement(ctx: any): void {
-    // Check both possible CST structures for expression
-    let expressionCtx;
-    if (ctx.children && ctx.children.expression) {
-      expressionCtx = ctx.children.expression[0];
-    } else if (ctx.expression) {
-      expressionCtx = ctx.expression[0];
+    // Unified CST access: always use ctx.children.*
+    if (!ctx.children) {
+      this.emit({ type: "RETURN" });
+      return;
     }
     
+    const expressionCtx = ctx.children.expression?.[0];
     if (expressionCtx) {
       const exprResult = this.visitExpression(expressionCtx);
       this.emit({ type: "RETURN", value: exprResult });
@@ -292,14 +268,12 @@ export class IntermediateCodeGenerator {
   }
 
   private visitPrintStatement(ctx: any): void {
-    // Check both possible CST structures for expression
-    let expressionCtx;
-    if (ctx.children && ctx.children.expression) {
-      expressionCtx = ctx.children.expression[0];
-    } else if (ctx.expression) {
-      expressionCtx = ctx.expression[0];
+    // Unified CST access: always use ctx.children.*
+    if (!ctx.children) {
+      return;
     }
     
+    const expressionCtx = ctx.children.expression?.[0];
     if (expressionCtx) {
       const exprResult = this.visitExpression(expressionCtx);
       this.emit({ type: "PRINT", value: exprResult });
@@ -307,28 +281,16 @@ export class IntermediateCodeGenerator {
   }
 
   private visitExpression(ctx: any): string {
-    console.log("visitExpression called with:", ctx);
-    console.log("ctx.children:", ctx.children);
-    console.log("ctx.children?.logicalOr:", ctx.children?.logicalOr);
-    
     if (ctx.children && ctx.children.logicalOr && ctx.children.logicalOr.length > 0) {
-      const result = this.visitLogicalOr(ctx.children.logicalOr[0]);
-      console.log("visitExpression result:", result);
-      return result;
+      return this.visitLogicalOr(ctx.children.logicalOr[0]);
     }
     
-    console.log("visitExpression fallback to 0");
     return "0"; // fallback
   }
 
   private visitLogicalOr(ctx: any): string {
-    console.log("visitLogicalOr called with:", ctx);
-    console.log("ctx.children:", ctx.children);
-    console.log("ctx.children?.logicalAnd:", ctx.children?.logicalAnd);
-    
     if (ctx.children && ctx.children.logicalAnd && ctx.children.logicalAnd.length > 0) {
       let result = this.visitLogicalAnd(ctx.children.logicalAnd[0]);
-      console.log("visitLogicalOr result:", result);
       
       for (let i = 1; i < ctx.children.logicalAnd.length; i++) {
         const right = this.visitLogicalAnd(ctx.children.logicalAnd[i]);
@@ -339,7 +301,6 @@ export class IntermediateCodeGenerator {
       
       return result;
     }
-    console.log("visitLogicalOr fallback to 0");
     return "0"; // fallback
   }
 
@@ -559,29 +520,21 @@ export class IntermediateCodeGenerator {
   }
 
   private visitFunctionCall(ctx: any): string {
-    console.log("visitFunctionCall called with:", ctx);
-    console.log("ctx.children:", ctx.children);
-    
+    // Unified CST access: always use ctx.children.*
     if (!ctx.children || !ctx.children.Identifier) {
-      console.log("No Identifier found in function call");
       return "0";
     }
     
     const funcName = ctx.children.Identifier[0].image;
     const args: string[] = [];
     
-    console.log("Function call name:", funcName);
-    
     if (ctx.children.argumentList && ctx.children.argumentList.length > 0) {
-      console.log("Argument list found:", ctx.children.argumentList[0]);
       if (ctx.children.argumentList[0].children && ctx.children.argumentList[0].children.expression) {
         for (const arg of ctx.children.argumentList[0].children.expression) {
           args.push(this.visitExpression(arg));
         }
       }
     }
-    
-    console.log("Function call arguments:", args);
     
     const result = this.newTemp();
     this.emit({ type: "CALL", target: result, function: funcName, args });
