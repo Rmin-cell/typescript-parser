@@ -90,7 +90,8 @@ export class CompilerInterpreter {
           this.visitStatement(stmt);
         }
       }
-    } else if (ctx.else && ctx.statement2) {
+    } else if (ctx.statement2) {
+      // Handle else block (statement2 from parser)
       for (const stmt of ctx.statement2) {
         this.visitStatement(stmt);
       }

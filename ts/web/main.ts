@@ -6,9 +6,11 @@ import { parse as parseSimple } from "../src/simple/parser";
 import { compilerLexer } from "../src/compiler/lexer";
 import { parseProgram } from "../src/compiler/parser";
 import { SymbolTable } from "../src/compiler/symbol-table";
-import { SimpleIntermediateCodeGenerator } from "../src/compiler/simple-intermediate-code";
+import { IntermediateCodeGenerator } from "../src/compiler/intermediate-code";
 import { CpuCodeGenerator } from "../src/compiler/cpu-code-gen";
 import { interpretCompilerCode } from "../src/compiler/interpreter";
+import { CFGGenerator } from "../src/compiler/cfg-generator";
+import { CFGVisualizer } from "../src/compiler/cfg-visualizer";
 
 function safeStringify(obj: any): string {
   return JSON.stringify(obj, (k, v) => {
@@ -82,7 +84,7 @@ const ast = document.getElementById("ast") as HTMLPreElement;
 const result = document.getElementById("result") as HTMLPreElement;
 const runBtn = document.getElementById("run") as HTMLButtonElement;
 const modeSel = document.getElementById("mode") as HTMLSelectElement;
-const svg = document.getElementById("ast-svg") as SVGSVGElement;
+const svg = document.getElementById("ast-svg") as unknown as SVGSVGElement;
 const astDetails = document.getElementById("ast-details") as HTMLDetailsElement;
 const astDiagramDetails = document.getElementById("ast-diagram-details") as HTMLDetailsElement;
 
@@ -91,6 +93,7 @@ const compilerPanels = document.getElementById("compiler-panels") as HTMLDivElem
 const symbolTable = document.getElementById("symbol-table") as HTMLPreElement;
 const threeAddress = document.getElementById("three-address") as HTMLPreElement;
 const cpuCode = document.getElementById("cpu-code") as HTMLPreElement;
+const cfgSvg = document.getElementById("cfg-svg") as HTMLDivElement;
 
 function run() {
   const text = input.value.trim();
@@ -165,7 +168,7 @@ function renderCompilerOutput(text: string): void {
     
     // Generate symbol table and intermediate code
     const symTable = new SymbolTable();
-    const intermediateGen = new SimpleIntermediateCodeGenerator(symTable);
+    const intermediateGen = new IntermediateCodeGenerator(symTable);
     const threeAddressCode = intermediateGen.generate(parseResult.cst);
     
     // Get symbols from the populated symbol table
@@ -204,11 +207,11 @@ function renderCompilerOutput(text: string): void {
           case 'JUMP_IF_FALSE': return `${line}if (!${instruction.condition}) goto ${instruction.target}`;
           case 'JUMP_IF_TRUE': return `${line}if (${instruction.condition}) goto ${instruction.target}`;
           case 'CALL': return `${line}${instruction.target} = call ${instruction.function}(${instruction.args.join(', ')})`;
-          case 'RETURN': return instruction.value ? `${line}return ${instruction.value}` : `${line}return`;
-          case 'PRINT': return `${line}print ${instruction.value}`;
-          case 'FUNCTION_START': return `${line}function ${instruction.name}(${instruction.params.join(', ')}) {`;
+          case 'RETURN': return (instruction as any).value ? `${line}return ${(instruction as any).value}` : `${line}return`;
+          case 'PRINT': return `${line}print ${(instruction as any).value}`;
+          case 'FUNCTION_START': return `${line}function ${(instruction as any).name}(${(instruction as any).params.join(', ')}) {`;
           case 'FUNCTION_END': return `${line}}`;
-          default: return `${line}${instruction.type}`;
+          default: return `${line}${(instruction as any).type}`;
         }
       }).join('\n');
     }
@@ -239,20 +242,49 @@ function renderCompilerOutput(text: string): void {
           case 'JMP': return `${line}JMP ${instruction.target}`;
           case 'CALL': return `${line}CALL ${instruction.target}`;
           case 'RET': return `${line}RET`;
-          case 'PUSH': return `${line}PUSH ${instruction.value}`;
-          case 'POP': return `${line}POP ${instruction.reg}`;
-          case 'PRINT': return `${line}PRINT ${instruction.reg}`;
-          case 'LABEL': return `${line}${instruction.name}:`;
-          case 'FUNCTION_START': return `${line}${instruction.name}:`;
+          case 'PUSH': return `${line}PUSH ${(instruction as any).value}`;
+          case 'POP': return `${line}POP ${(instruction as any).reg}`;
+          case 'PRINT': return `${line}PRINT ${(instruction as any).reg}`;
+          case 'LABEL': return `${line}${(instruction as any).name}:`;
+          case 'FUNCTION_START': return `${line}${(instruction as any).name}:`;
           case 'FUNCTION_END': return `${line}RET`;
-          default: return `${line}${instruction.type}`;
+          default: return `${line}${(instruction as any).type}`;
         }
       }).join('\n');
+    }
+    
+    // Generate Control Flow Graph
+    try {
+      const cfgGenerator = new CFGGenerator();
+      const cfg = cfgGenerator.generate(threeAddressCode);
+      
+      // Create SVG element for CFG visualization
+      const svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svgElement.setAttribute("width", "100%");
+      svgElement.setAttribute("height", "400");
+      svgElement.setAttribute("viewBox", "0 0 800 400");
+      
+      // Clear previous content
+      cfgSvg.innerHTML = "";
+      cfgSvg.appendChild(svgElement);
+      
+      // Create visualizer and render CFG
+      const cfgVisualizer = new CFGVisualizer(svgElement);
+      cfgVisualizer.render(cfg);
+      
+    } catch (cfgError: any) {
+      cfgSvg.innerHTML = `<div style="color: #ef4444; padding: 20px; text-align: center;">
+        <p>CFG Generation Error: ${cfgError.message}</p>
+        <p>This might happen with simple programs that don't have control flow.</p>
+      </div>`;
     }
   } catch (error: any) {
     symbolTable.textContent = `Error: ${error.message}`;
     threeAddress.textContent = `Error: ${error.message}`;
     cpuCode.textContent = `Error: ${error.message}`;
+    cfgSvg.innerHTML = `<div style="color: #ef4444; padding: 20px; text-align: center;">
+      <p>CFG Generation Error: ${error.message}</p>
+    </div>`;
   }
 }
 

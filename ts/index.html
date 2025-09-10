@@ -385,13 +385,39 @@
       ::-webkit-scrollbar-thumb:hover {
         background: var(--text-muted);
       }
+      
+      /* CFG Visualization Styles */
+      #cfg-svg {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        overflow: visible;
+      }
+      
+      .cfg-node {
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      
+      .cfg-node:hover circle {
+        stroke-width: 3;
+        filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+      }
+      
+      .cfg-node:hover text {
+        font-weight: bold;
+      }
+      
+      .instruction-details {
+        pointer-events: none;
+      }
     </style>
   </head>
   <body>
     <div class="container">
       <div class="header">
         <h1>Compiler Visualizer</h1>
-        <div class="subtitle">Interactive Lexical Analysis and Parsing Tool</div>
+        <div class="subtitle">Interactive Compiler</div>
       </div>
       
       <div class="toolbar">
@@ -485,6 +511,18 @@
             </summary>
             <div>
               <pre id="cpu-code"></pre>
+            </div>
+          </details>
+
+          <details id="cfg-details">
+            <summary>
+              <i data-lucide="git-branch"></i>
+              Control Flow Graph
+            </summary>
+            <div>
+              <div id="cfg-container" style="text-align: center; padding: 20px;">
+                <div id="cfg-svg"></div>
+              </div>
             </div>
           </details>
         </div>

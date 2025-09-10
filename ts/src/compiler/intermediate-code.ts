@@ -116,27 +116,62 @@ export class IntermediateCodeGenerator {
   private visitVariableDeclaration(ctx: any): void {
     if (ctx.children) {
       const varName = ctx.children.Identifier[0].image;
-      const exprResult = this.visitExpression(ctx.children.expression[0]);
       
-      // Determine variable type from expression
-      const varType = this.inferTypeFromExpression(ctx.children.expression[0]);
+      // Check both possible CST structures
+      let expressionCtx;
+      if (ctx.children.expression) {
+        expressionCtx = ctx.children.expression[0];
+      } else if (ctx.expression) {
+        expressionCtx = ctx.expression[0];
+      }
       
-      // Declare variable in symbol table
-      this.symbolTable.declareVariable(varName, varType);
-      
-      this.emit({ type: "ASSIGN", target: varName, source: exprResult });
+      if (expressionCtx) {
+        const exprResult = this.visitExpression(expressionCtx);
+        
+        // Determine variable type from expression
+        const varType = this.inferTypeFromExpression(expressionCtx);
+        
+        // Declare variable in symbol table
+        this.symbolTable.declareVariable(varName, varType);
+        
+        this.emit({ type: "ASSIGN", target: varName, source: exprResult });
+      }
     }
   }
 
   private visitAssignment(ctx: any): void {
-    const varName = ctx.Identifier[0].image;
-    const exprResult = this.visitExpression(ctx.expression[0]);
-    
-    this.emit({ type: "ASSIGN", target: varName, source: exprResult });
+    if (ctx.Identifier && ctx.Identifier.length > 0) {
+      const varName = ctx.Identifier[0].image;
+      
+      // Check both possible CST structures
+      let expressionCtx;
+      if (ctx.children && ctx.children.expression) {
+        expressionCtx = ctx.children.expression[0];
+      } else if (ctx.expression) {
+        expressionCtx = ctx.expression[0];
+      }
+      
+      if (expressionCtx) {
+        const exprResult = this.visitExpression(expressionCtx);
+        this.emit({ type: "ASSIGN", target: varName, source: exprResult });
+      }
+    }
   }
 
   private visitIfStatement(ctx: any): void {
-    const conditionResult = this.visitExpression(ctx.expression[0]);
+    // Check both possible CST structures for expression
+    let expressionCtx;
+    if (ctx.children && ctx.children.expression) {
+      expressionCtx = ctx.children.expression[0];
+    } else if (ctx.expression) {
+      expressionCtx = ctx.expression[0];
+    }
+    
+    if (!expressionCtx) {
+      return;
+    }
+    
+    const conditionResult = this.visitExpression(expressionCtx);
     const elseLabel = this.newLabel();
     const endLabel = this.newLabel();
     
@@ -172,7 +207,19 @@ export class IntermediateCodeGenerator {
     
     this.emit({ type: "LABEL", name: startLabel });
     
-    const conditionResult = this.visitExpression(ctx.expression[0]);
+    // Check both possible CST structures for expression
+    let expressionCtx;
+    if (ctx.children && ctx.children.expression) {
+      expressionCtx = ctx.children.expression[0];
+    } else if (ctx.expression) {
+      expressionCtx = ctx.expression[0];
+    }
+    
+    if (!expressionCtx) {
+      return;
+    }
+    
+    const conditionResult = this.visitExpression(expressionCtx);
     this.emit({ type: "JUMP_IF_FALSE", condition: conditionResult, target: endLabel });
     
     // Loop body
@@ -214,8 +261,16 @@ export class IntermediateCodeGenerator {
   }
 
   private visitReturnStatement(ctx: any): void {
-    if (ctx.expression) {
-      const exprResult = this.visitExpression(ctx.expression[0]);
+    // Check both possible CST structures for expression
+    let expressionCtx;
+    if (ctx.children && ctx.children.expression) {
+      expressionCtx = ctx.children.expression[0];
+    } else if (ctx.expression) {
+      expressionCtx = ctx.expression[0];
+    }
+    
+    if (expressionCtx) {
+      const exprResult = this.visitExpression(expressionCtx);
       this.emit({ type: "RETURN", value: exprResult });
     } else {
       this.emit({ type: "RETURN" });
@@ -223,124 +278,156 @@ export class IntermediateCodeGenerator {
   }
 
   private visitPrintStatement(ctx: any): void {
-    const exprResult = this.visitExpression(ctx.expression[0]);
-    this.emit({ type: "PRINT", value: exprResult });
+    // Check both possible CST structures for expression
+    let expressionCtx;
+    if (ctx.children && ctx.children.expression) {
+      expressionCtx = ctx.children.expression[0];
+    } else if (ctx.expression) {
+      expressionCtx = ctx.expression[0];
+    }
+    
+    if (expressionCtx) {
+      const exprResult = this.visitExpression(expressionCtx);
+      this.emit({ type: "PRINT", value: exprResult });
+    }
   }
 
   private visitExpression(ctx: any): string {
-    console.log("visitExpression called with:", ctx);
     if (ctx.children && ctx.children.logicalOr) {
       return this.visitLogicalOr(ctx.children.logicalOr[0]);
+    }
+    // If no children, this might be a direct logicalOr
+    if (ctx.logicalOr) {
+      return this.visitLogicalOr(ctx.logicalOr[0]);
     }
     return "0"; // fallback
   }
 
   private visitLogicalOr(ctx: any): string {
-    let result = this.visitLogicalAnd(ctx.logicalAnd[0]);
-    
-    for (let i = 1; i < ctx.logicalAnd.length; i++) {
-      const right = this.visitLogicalAnd(ctx.logicalAnd[i]);
-      const temp = this.newTemp();
-      this.emit({ type: "OR", target: temp, left: result, right });
-      result = temp;
+    if (ctx.logicalAnd && ctx.logicalAnd.length > 0) {
+      let result = this.visitLogicalAnd(ctx.logicalAnd[0]);
+      
+      for (let i = 1; i < ctx.logicalAnd.length; i++) {
+        const right = this.visitLogicalAnd(ctx.logicalAnd[i]);
+        const temp = this.newTemp();
+        this.emit({ type: "OR", target: temp, left: result, right });
+        result = temp;
+      }
+      
+      return result;
     }
-    
-    return result;
+    return "0"; // fallback
   }
 
   private visitLogicalAnd(ctx: any): string {
-    let result = this.visitEquality(ctx.equality[0]);
-    
-    for (let i = 1; i < ctx.equality.length; i++) {
-      const right = this.visitEquality(ctx.equality[i]);
-      const temp = this.newTemp();
-      this.emit({ type: "AND", target: temp, left: result, right });
-      result = temp;
+    if (ctx.equality && ctx.equality.length > 0) {
+      let result = this.visitEquality(ctx.equality[0]);
+      
+      for (let i = 1; i < ctx.equality.length; i++) {
+        const right = this.visitEquality(ctx.equality[i]);
+        const temp = this.newTemp();
+        this.emit({ type: "AND", target: temp, left: result, right });
+        result = temp;
+      }
+      
+      return result;
     }
-    
-    return result;
+    return "0"; // fallback
   }
 
   private visitEquality(ctx: any): string {
-    let result = this.visitComparison(ctx.comparison[0]);
-    
-    for (let i = 1; i < ctx.comparison.length; i++) {
-      const right = this.visitComparison(ctx.comparison[i]);
-      const temp = this.newTemp();
+    if (ctx.comparison && ctx.comparison.length > 0) {
+      let result = this.visitComparison(ctx.comparison[0]);
       
-      // Determine operator type
-      const opIndex = i - 1;
-      const opType = ctx.Equal ? "EQ" : "NE";
+      for (let i = 1; i < ctx.comparison.length; i++) {
+        const right = this.visitComparison(ctx.comparison[i]);
+        const temp = this.newTemp();
+        
+        // Determine operator type
+        const opIndex = i - 1;
+        const opType = ctx.Equal ? "EQ" : "NE";
+        
+        this.emit({ type: opType, target: temp, left: result, right });
+        result = temp;
+      }
       
-      this.emit({ type: opType, target: temp, left: result, right });
-      result = temp;
+      return result;
     }
-    
-    return result;
+    return "0"; // fallback
   }
 
   private visitComparison(ctx: any): string {
-    let result = this.visitTerm(ctx.term[0]);
-    
-    for (let i = 1; i < ctx.term.length; i++) {
-      const right = this.visitTerm(ctx.term[i]);
-      const temp = this.newTemp();
+    if (ctx.term && ctx.term.length > 0) {
+      let result = this.visitTerm(ctx.term[0]);
       
-      // Determine operator type based on context
-      const opType = "LT"; // Simplified for now
-      this.emit({ type: opType, target: temp, left: result, right });
-      result = temp;
+      for (let i = 1; i < ctx.term.length; i++) {
+        const right = this.visitTerm(ctx.term[i]);
+        const temp = this.newTemp();
+        
+        // Determine operator type based on context
+        const opType = "LT"; // Simplified for now
+        this.emit({ type: opType, target: temp, left: result, right });
+        result = temp;
+      }
+      
+      return result;
     }
-    
-    return result;
+    return "0"; // fallback
   }
 
   private visitTerm(ctx: any): string {
-    let result = this.visitFactor(ctx.factor[0]);
-    
-    for (let i = 1; i < ctx.factor.length; i++) {
-      const right = this.visitFactor(ctx.factor[i]);
-      const temp = this.newTemp();
+    if (ctx.factor && ctx.factor.length > 0) {
+      let result = this.visitFactor(ctx.factor[0]);
       
-      // Determine operator type
-      const opType = ctx.Plus ? "ADD" : "SUB";
-      this.emit({ type: opType, target: temp, left: result, right });
-      result = temp;
+      for (let i = 1; i < ctx.factor.length; i++) {
+        const right = this.visitFactor(ctx.factor[i]);
+        const temp = this.newTemp();
+        
+        // Determine operator type
+        const opType = ctx.Plus ? "ADD" : "SUB";
+        this.emit({ type: opType, target: temp, left: result, right });
+        result = temp;
+      }
+      
+      return result;
     }
-    
-    return result;
+    return "0"; // fallback
   }
 
   private visitFactor(ctx: any): string {
-    let result = this.visitUnary(ctx.unary[0]);
-    
-    for (let i = 1; i < ctx.unary.length; i++) {
-      const right = this.visitUnary(ctx.unary[i]);
-      const temp = this.newTemp();
+    if (ctx.unary && ctx.unary.length > 0) {
+      let result = this.visitUnary(ctx.unary[0]);
       
-      // Determine operator type
-      const opType = ctx.Mult ? "MUL" : ctx.Div ? "DIV" : "MOD";
-      this.emit({ type: opType, target: temp, left: result, right });
-      result = temp;
+      for (let i = 1; i < ctx.unary.length; i++) {
+        const right = this.visitUnary(ctx.unary[i]);
+        const temp = this.newTemp();
+        
+        // Determine operator type
+        const opType = ctx.Mult ? "MUL" : ctx.Div ? "DIV" : "MOD";
+        this.emit({ type: opType, target: temp, left: result, right });
+        result = temp;
+      }
+      
+      return result;
     }
-    
-    return result;
+    return "0"; // fallback
   }
 
   private visitUnary(ctx: any): string {
-    if (ctx.Not) {
+    if (ctx.Not && ctx.unary && ctx.unary.length > 0) {
       const operand = this.visitUnary(ctx.unary[0]);
       const temp = this.newTemp();
       this.emit({ type: "NOT", target: temp, source: operand });
       return temp;
-    } else if (ctx.Minus) {
+    } else if (ctx.Minus && ctx.unary && ctx.unary.length > 0) {
       const operand = this.visitUnary(ctx.unary[0]);
       const temp = this.newTemp();
       this.emit({ type: "NEG", target: temp, source: operand });
       return temp;
-    } else {
+    } else if (ctx.primary && ctx.primary.length > 0) {
       return this.visitPrimary(ctx.primary[0]);
     }
+    return "0"; // fallback
   }
 
   private visitPrimary(ctx: any): string {
