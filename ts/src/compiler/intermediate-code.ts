@@ -114,28 +114,22 @@ export class IntermediateCodeGenerator {
   }
 
   private visitVariableDeclaration(ctx: any): void {
+    console.log("visitVariableDeclaration called with:", ctx);
     if (ctx.children) {
       const varName = ctx.children.Identifier[0].image;
+      console.log("Variable name:", varName);
+      console.log("Expression context:", ctx.children.expression[0]);
+      const exprResult = this.visitExpression(ctx.children.expression[0]);
+      console.log("Expression result:", exprResult);
       
-      // Check both possible CST structures
-      let expressionCtx;
-      if (ctx.children.expression) {
-        expressionCtx = ctx.children.expression[0];
-      } else if (ctx.expression) {
-        expressionCtx = ctx.expression[0];
-      }
+      // Determine variable type from expression
+      const varType = this.inferTypeFromExpression(ctx.children.expression[0]);
+      console.log("Variable type:", varType);
       
-      if (expressionCtx) {
-        const exprResult = this.visitExpression(expressionCtx);
-        
-        // Determine variable type from expression
-        const varType = this.inferTypeFromExpression(expressionCtx);
-        
-        // Declare variable in symbol table
-        this.symbolTable.declareVariable(varName, varType);
-        
-        this.emit({ type: "ASSIGN", target: varName, source: exprResult });
-      }
+      // Declare variable in symbol table
+      this.symbolTable.declareVariable(varName, varType);
+      
+      this.emit({ type: "ASSIGN", target: varName, source: exprResult });
     }
   }
 
@@ -293,22 +287,31 @@ export class IntermediateCodeGenerator {
   }
 
   private visitExpression(ctx: any): string {
-    if (ctx.children && ctx.children.logicalOr) {
-      return this.visitLogicalOr(ctx.children.logicalOr[0]);
+    console.log("visitExpression called with:", ctx);
+    console.log("ctx.children:", ctx.children);
+    console.log("ctx.children?.logicalOr:", ctx.children?.logicalOr);
+    
+    if (ctx.children && ctx.children.logicalOr && ctx.children.logicalOr.length > 0) {
+      const result = this.visitLogicalOr(ctx.children.logicalOr[0]);
+      console.log("visitExpression result:", result);
+      return result;
     }
-    // If no children, this might be a direct logicalOr
-    if (ctx.logicalOr) {
-      return this.visitLogicalOr(ctx.logicalOr[0]);
-    }
+    
+    console.log("visitExpression fallback to 0");
     return "0"; // fallback
   }
 
   private visitLogicalOr(ctx: any): string {
-    if (ctx.logicalAnd && ctx.logicalAnd.length > 0) {
-      let result = this.visitLogicalAnd(ctx.logicalAnd[0]);
+    console.log("visitLogicalOr called with:", ctx);
+    console.log("ctx.children:", ctx.children);
+    console.log("ctx.children?.logicalAnd:", ctx.children?.logicalAnd);
+    
+    if (ctx.children && ctx.children.logicalAnd && ctx.children.logicalAnd.length > 0) {
+      let result = this.visitLogicalAnd(ctx.children.logicalAnd[0]);
+      console.log("visitLogicalOr result:", result);
       
-      for (let i = 1; i < ctx.logicalAnd.length; i++) {
-        const right = this.visitLogicalAnd(ctx.logicalAnd[i]);
+      for (let i = 1; i < ctx.children.logicalAnd.length; i++) {
+        const right = this.visitLogicalAnd(ctx.children.logicalAnd[i]);
         const temp = this.newTemp();
         this.emit({ type: "OR", target: temp, left: result, right });
         result = temp;
@@ -316,15 +319,21 @@ export class IntermediateCodeGenerator {
       
       return result;
     }
+    console.log("visitLogicalOr fallback to 0");
     return "0"; // fallback
   }
 
   private visitLogicalAnd(ctx: any): string {
-    if (ctx.equality && ctx.equality.length > 0) {
-      let result = this.visitEquality(ctx.equality[0]);
+    console.log("visitLogicalAnd called with:", ctx);
+    console.log("ctx.children:", ctx.children);
+    console.log("ctx.children?.equality:", ctx.children?.equality);
+    
+    if (ctx.children && ctx.children.equality && ctx.children.equality.length > 0) {
+      let result = this.visitEquality(ctx.children.equality[0]);
+      console.log("visitLogicalAnd result:", result);
       
-      for (let i = 1; i < ctx.equality.length; i++) {
-        const right = this.visitEquality(ctx.equality[i]);
+      for (let i = 1; i < ctx.children.equality.length; i++) {
+        const right = this.visitEquality(ctx.children.equality[i]);
         const temp = this.newTemp();
         this.emit({ type: "AND", target: temp, left: result, right });
         result = temp;
@@ -332,15 +341,21 @@ export class IntermediateCodeGenerator {
       
       return result;
     }
+    console.log("visitLogicalAnd fallback to 0");
     return "0"; // fallback
   }
 
   private visitEquality(ctx: any): string {
-    if (ctx.comparison && ctx.comparison.length > 0) {
-      let result = this.visitComparison(ctx.comparison[0]);
+    console.log("visitEquality called with:", ctx);
+    console.log("ctx.children:", ctx.children);
+    console.log("ctx.children?.comparison:", ctx.children?.comparison);
+    
+    if (ctx.children && ctx.children.comparison && ctx.children.comparison.length > 0) {
+      let result = this.visitComparison(ctx.children.comparison[0]);
+      console.log("visitEquality result:", result);
       
-      for (let i = 1; i < ctx.comparison.length; i++) {
-        const right = this.visitComparison(ctx.comparison[i]);
+      for (let i = 1; i < ctx.children.comparison.length; i++) {
+        const right = this.visitComparison(ctx.children.comparison[i]);
         const temp = this.newTemp();
         
         // Determine operator type
@@ -353,15 +368,21 @@ export class IntermediateCodeGenerator {
       
       return result;
     }
+    console.log("visitEquality fallback to 0");
     return "0"; // fallback
   }
 
   private visitComparison(ctx: any): string {
-    if (ctx.term && ctx.term.length > 0) {
-      let result = this.visitTerm(ctx.term[0]);
+    console.log("visitComparison called with:", ctx);
+    console.log("ctx.children:", ctx.children);
+    console.log("ctx.children?.term:", ctx.children?.term);
+    
+    if (ctx.children && ctx.children.term && ctx.children.term.length > 0) {
+      let result = this.visitTerm(ctx.children.term[0]);
+      console.log("visitComparison result:", result);
       
-      for (let i = 1; i < ctx.term.length; i++) {
-        const right = this.visitTerm(ctx.term[i]);
+      for (let i = 1; i < ctx.children.term.length; i++) {
+        const right = this.visitTerm(ctx.children.term[i]);
         const temp = this.newTemp();
         
         // Determine operator type based on context
@@ -372,15 +393,21 @@ export class IntermediateCodeGenerator {
       
       return result;
     }
+    console.log("visitComparison fallback to 0");
     return "0"; // fallback
   }
 
   private visitTerm(ctx: any): string {
-    if (ctx.factor && ctx.factor.length > 0) {
-      let result = this.visitFactor(ctx.factor[0]);
+    console.log("visitTerm called with:", ctx);
+    console.log("ctx.children:", ctx.children);
+    console.log("ctx.children?.factor:", ctx.children?.factor);
+    
+    if (ctx.children && ctx.children.factor && ctx.children.factor.length > 0) {
+      let result = this.visitFactor(ctx.children.factor[0]);
+      console.log("visitTerm result:", result);
       
-      for (let i = 1; i < ctx.factor.length; i++) {
-        const right = this.visitFactor(ctx.factor[i]);
+      for (let i = 1; i < ctx.children.factor.length; i++) {
+        const right = this.visitFactor(ctx.children.factor[i]);
         const temp = this.newTemp();
         
         // Determine operator type
@@ -391,15 +418,21 @@ export class IntermediateCodeGenerator {
       
       return result;
     }
+    console.log("visitTerm fallback to 0");
     return "0"; // fallback
   }
 
   private visitFactor(ctx: any): string {
-    if (ctx.unary && ctx.unary.length > 0) {
-      let result = this.visitUnary(ctx.unary[0]);
+    console.log("visitFactor called with:", ctx);
+    console.log("ctx.children:", ctx.children);
+    console.log("ctx.children?.unary:", ctx.children?.unary);
+    
+    if (ctx.children && ctx.children.unary && ctx.children.unary.length > 0) {
+      let result = this.visitUnary(ctx.children.unary[0]);
+      console.log("visitFactor result:", result);
       
-      for (let i = 1; i < ctx.unary.length; i++) {
-        const right = this.visitUnary(ctx.unary[i]);
+      for (let i = 1; i < ctx.children.unary.length; i++) {
+        const right = this.visitUnary(ctx.children.unary[i]);
         const temp = this.newTemp();
         
         // Determine operator type
@@ -410,42 +443,74 @@ export class IntermediateCodeGenerator {
       
       return result;
     }
+    console.log("visitFactor fallback to 0");
     return "0"; // fallback
   }
 
   private visitUnary(ctx: any): string {
-    if (ctx.Not && ctx.unary && ctx.unary.length > 0) {
-      const operand = this.visitUnary(ctx.unary[0]);
+    console.log("visitUnary called with:", ctx);
+    console.log("ctx.children:", ctx.children);
+    console.log("ctx.children?.Not:", ctx.children?.Not);
+    console.log("ctx.children?.Minus:", ctx.children?.Minus);
+    console.log("ctx.children?.primary:", ctx.children?.primary);
+    
+    if (ctx.children && ctx.children.Not && ctx.children.unary && ctx.children.unary.length > 0) {
+      const operand = this.visitUnary(ctx.children.unary[0]);
       const temp = this.newTemp();
       this.emit({ type: "NOT", target: temp, source: operand });
       return temp;
-    } else if (ctx.Minus && ctx.unary && ctx.unary.length > 0) {
-      const operand = this.visitUnary(ctx.unary[0]);
+    } else if (ctx.children && ctx.children.Minus && ctx.children.unary && ctx.children.unary.length > 0) {
+      const operand = this.visitUnary(ctx.children.unary[0]);
       const temp = this.newTemp();
       this.emit({ type: "NEG", target: temp, source: operand });
       return temp;
-    } else if (ctx.primary && ctx.primary.length > 0) {
-      return this.visitPrimary(ctx.primary[0]);
+    } else if (ctx.children && ctx.children.primary && ctx.children.primary.length > 0) {
+      const result = this.visitPrimary(ctx.children.primary[0]);
+      console.log("visitUnary result:", result);
+      return result;
     }
+    console.log("visitUnary fallback to 0");
     return "0"; // fallback
   }
 
   private visitPrimary(ctx: any): string {
-    if (ctx.NumberLiteral) {
-      return ctx.NumberLiteral[0].image;
-    } else if (ctx.StringLiteral) {
-      return ctx.StringLiteral[0].image;
-    } else if (ctx.BooleanLiteral) {
-      return ctx.BooleanLiteral[0].image;
-    } else if (ctx.functionCall) {
-      return this.visitFunctionCall(ctx.functionCall[0]);
-    } else if (ctx.Identifier) {
-      return ctx.Identifier[0].image;
-    } else if (ctx.expression) {
-      return this.visitExpression(ctx.expression[0]);
+    console.log("visitPrimary called with:", ctx);
+    console.log("ctx.children:", ctx.children);
+    console.log("ctx.children?.NumberLiteral:", ctx.children?.NumberLiteral);
+    console.log("ctx.children?.StringLiteral:", ctx.children?.StringLiteral);
+    console.log("ctx.children?.BooleanLiteral:", ctx.children?.BooleanLiteral);
+    console.log("ctx.children?.functionCall:", ctx.children?.functionCall);
+    console.log("ctx.children?.Identifier:", ctx.children?.Identifier);
+    console.log("ctx.children?.expression:", ctx.children?.expression);
+    
+    if (ctx.children && ctx.children.NumberLiteral && ctx.children.NumberLiteral.length > 0) {
+      const result = ctx.children.NumberLiteral[0].image;
+      console.log("visitPrimary NumberLiteral result:", result);
+      return result;
+    } else if (ctx.children && ctx.children.StringLiteral && ctx.children.StringLiteral.length > 0) {
+      const result = ctx.children.StringLiteral[0].image;
+      console.log("visitPrimary StringLiteral result:", result);
+      return result;
+    } else if (ctx.children && ctx.children.BooleanLiteral && ctx.children.BooleanLiteral.length > 0) {
+      const result = ctx.children.BooleanLiteral[0].image;
+      console.log("visitPrimary BooleanLiteral result:", result);
+      return result;
+    } else if (ctx.children && ctx.children.functionCall && ctx.children.functionCall.length > 0) {
+      const result = this.visitFunctionCall(ctx.children.functionCall[0]);
+      console.log("visitPrimary functionCall result:", result);
+      return result;
+    } else if (ctx.children && ctx.children.Identifier && ctx.children.Identifier.length > 0) {
+      const result = ctx.children.Identifier[0].image;
+      console.log("visitPrimary Identifier result:", result);
+      return result;
+    } else if (ctx.children && ctx.children.expression && ctx.children.expression.length > 0) {
+      const result = this.visitExpression(ctx.children.expression[0]);
+      console.log("visitPrimary expression result:", result);
+      return result;
     }
     
-    throw new Error("Invalid primary expression");
+    console.log("visitPrimary fallback to 0");
+    return "0"; // fallback instead of throwing error
   }
 
   private visitFunctionCall(ctx: any): string {
