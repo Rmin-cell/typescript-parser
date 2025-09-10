@@ -11,6 +11,8 @@ import { CpuCodeGenerator } from "../src/compiler/cpu-code-gen";
 import { interpretCompilerCode } from "../src/compiler/interpreter";
 import { CFGGenerator } from "../src/compiler/cfg-generator";
 import { CFGVisualizer } from "../src/compiler/cfg-visualizer";
+import { RegisterAllocator } from "../src/compiler/register-allocator";
+import { RegisterAllocatorVisualizer } from "../src/compiler/register-allocator-visualizer";
 
 function safeStringify(obj: any): string {
   return JSON.stringify(obj, (k, v) => {
@@ -277,6 +279,34 @@ function renderCompilerOutput(text: string): void {
         <p>CFG Generation Error: ${cfgError.message}</p>
         <p>This might happen with simple programs that don't have control flow.</p>
       </div>`;
+    }
+
+    // Generate Register Allocation
+    try {
+      const cfgGenerator = new CFGGenerator();
+      const cfg = cfgGenerator.generate(threeAddressCode);
+      const registerAllocator = new RegisterAllocator(cfg, threeAddressCode);
+      const allocation = registerAllocator.allocate();
+      
+      // Get the register allocation container
+      const registerAllocationContainer = document.getElementById('register-allocation-container');
+      if (registerAllocationContainer) {
+        // Clear previous content
+        registerAllocationContainer.innerHTML = '';
+        
+        // Create visualizer and render register allocation
+        const registerVisualizer = new RegisterAllocatorVisualizer();
+        registerVisualizer.render(registerAllocationContainer, allocation);
+      }
+      
+    } catch (registerError: any) {
+      const registerAllocationContainer = document.getElementById('register-allocation-container');
+      if (registerAllocationContainer) {
+        registerAllocationContainer.innerHTML = `<div style="color: #ef4444; padding: 20px; text-align: center;">
+          <p>Register Allocation Error: ${registerError.message}</p>
+          <p>This might happen with programs that have no variables to allocate.</p>
+        </div>`;
+      }
     }
   } catch (error: any) {
     symbolTable.textContent = `Error: ${error.message}`;

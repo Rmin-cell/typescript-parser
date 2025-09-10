@@ -153,6 +153,9 @@ export class IntermediateCodeGenerator {
   }
 
   private visitIfStatement(ctx: any): void {
+    console.log("visitIfStatement called with:", ctx);
+    console.log("ctx.children:", ctx.children);
+    
     // Check both possible CST structures for expression
     let expressionCtx;
     if (ctx.children && ctx.children.expression) {
@@ -169,11 +172,16 @@ export class IntermediateCodeGenerator {
     const elseLabel = this.newLabel();
     const endLabel = this.newLabel();
     
+    console.log("If condition result:", conditionResult);
+    console.log("Else label:", elseLabel);
+    console.log("End label:", endLabel);
+    
     this.emit({ type: "JUMP_IF_FALSE", condition: conditionResult, target: elseLabel });
     
-    // Then block
-    if (ctx.statement) {
-      for (const stmt of ctx.statement) {
+    // Then block - use correct CST access
+    console.log("Processing then block, ctx.children.statement:", ctx.children?.statement);
+    if (ctx.children && ctx.children.statement) {
+      for (const stmt of ctx.children.statement) {
         this.visitStatement(stmt);
       }
     }
@@ -181,14 +189,11 @@ export class IntermediateCodeGenerator {
     this.emit({ type: "JUMP", target: endLabel });
     this.emit({ type: "LABEL", name: elseLabel });
     
-    // Else block (if exists)
-    if (ctx.else) {
-      // Find else statements in the context
-      const elseStatements = ctx.else[0]?.statement;
-      if (elseStatements) {
-        for (const stmt of elseStatements) {
-          this.visitStatement(stmt);
-        }
+    // Else block (if exists) - check for statement2
+    console.log("Processing else block, ctx.children.statement2:", ctx.children?.statement2);
+    if (ctx.children && ctx.children.statement2) {
+      for (const stmt of ctx.children.statement2) {
+        this.visitStatement(stmt);
       }
     }
     
@@ -216,9 +221,9 @@ export class IntermediateCodeGenerator {
     const conditionResult = this.visitExpression(expressionCtx);
     this.emit({ type: "JUMP_IF_FALSE", condition: conditionResult, target: endLabel });
     
-    // Loop body
-    if (ctx.statement) {
-      for (const stmt of ctx.statement) {
+    // Loop body - use correct CST access
+    if (ctx.children && ctx.children.statement) {
+      for (const stmt of ctx.children.statement) {
         this.visitStatement(stmt);
       }
     }
@@ -228,25 +233,40 @@ export class IntermediateCodeGenerator {
   }
 
   private visitFunctionDeclaration(ctx: any): void {
-    const funcName = ctx.Identifier[0].image;
+    console.log("visitFunctionDeclaration called with:", ctx);
+    console.log("ctx.children:", ctx.children);
+    
+    if (!ctx.children || !ctx.children.Identifier) {
+      console.log("No Identifier found in function declaration");
+      return;
+    }
+    
+    const funcName = ctx.children.Identifier[0].image;
     const params: string[] = [];
     const paramTypes: DataType[] = [];
     
-    if (ctx.parameterList) {
-      for (const param of ctx.parameterList[0].Identifier) {
-        params.push(param.image);
-        paramTypes.push("number"); // Default parameter type
+    console.log("Function name:", funcName);
+    
+    if (ctx.children.parameterList && ctx.children.parameterList.length > 0) {
+      console.log("Parameter list found:", ctx.children.parameterList[0]);
+      if (ctx.children.parameterList[0].children && ctx.children.parameterList[0].children.Identifier) {
+        for (const param of ctx.children.parameterList[0].children.Identifier) {
+          params.push(param.image);
+          paramTypes.push("number"); // Default parameter type
+        }
       }
     }
+    
+    console.log("Function parameters:", params);
     
     // Declare function in symbol table
     this.symbolTable.declareFunction(funcName, "number", paramTypes); // Default return type
     
     this.emit({ type: "FUNCTION_START", name: funcName, params });
     
-    // Function body
-    if (ctx.statement) {
-      for (const stmt of ctx.statement) {
+    // Function body - use correct CST access
+    if (ctx.children && ctx.children.statement) {
+      for (const stmt of ctx.children.statement) {
         this.visitStatement(stmt);
       }
     }
@@ -354,13 +374,17 @@ export class IntermediateCodeGenerator {
       let result = this.visitComparison(ctx.children.comparison[0]);
       console.log("visitEquality result:", result);
       
+      // Get the operators from the CST
+      const operators: string[] = [];
+      if (ctx.children.Equal) operators.push(...ctx.children.Equal.map((op: any) => "EQ"));
+      if (ctx.children.NotEqual) operators.push(...ctx.children.NotEqual.map((op: any) => "NE"));
+      
       for (let i = 1; i < ctx.children.comparison.length; i++) {
         const right = this.visitComparison(ctx.children.comparison[i]);
         const temp = this.newTemp();
         
-        // Determine operator type
-        const opIndex = i - 1;
-        const opType = ctx.Equal ? "EQ" : "NE";
+        // Use the operator for this position
+        const opType = operators[i - 1] as "EQ" | "NE" || "EQ";
         
         this.emit({ type: opType, target: temp, left: result, right });
         result = temp;
@@ -381,12 +405,20 @@ export class IntermediateCodeGenerator {
       let result = this.visitTerm(ctx.children.term[0]);
       console.log("visitComparison result:", result);
       
+      // Get the operators from the CST
+      const operators: string[] = [];
+      if (ctx.children.Less) operators.push(...ctx.children.Less.map((op: any) => "LT"));
+      if (ctx.children.Greater) operators.push(...ctx.children.Greater.map((op: any) => "GT"));
+      if (ctx.children.LessEqual) operators.push(...ctx.children.LessEqual.map((op: any) => "LE"));
+      if (ctx.children.GreaterEqual) operators.push(...ctx.children.GreaterEqual.map((op: any) => "GE"));
+      
       for (let i = 1; i < ctx.children.term.length; i++) {
         const right = this.visitTerm(ctx.children.term[i]);
         const temp = this.newTemp();
         
-        // Determine operator type based on context
-        const opType = "LT"; // Simplified for now
+        // Use the operator for this position
+        const opType = operators[i - 1] as "LT" | "GT" | "LE" | "GE" || "LT";
+        
         this.emit({ type: opType, target: temp, left: result, right });
         result = temp;
       }
@@ -406,12 +438,18 @@ export class IntermediateCodeGenerator {
       let result = this.visitFactor(ctx.children.factor[0]);
       console.log("visitTerm result:", result);
       
+      // Get the operators from the CST
+      const operators: string[] = [];
+      if (ctx.children.Plus) operators.push(...ctx.children.Plus.map((op: any) => "ADD"));
+      if (ctx.children.Minus) operators.push(...ctx.children.Minus.map((op: any) => "SUB"));
+      
       for (let i = 1; i < ctx.children.factor.length; i++) {
         const right = this.visitFactor(ctx.children.factor[i]);
         const temp = this.newTemp();
         
-        // Determine operator type
-        const opType = ctx.Plus ? "ADD" : "SUB";
+        // Use the operator for this position
+        const opType = operators[i - 1] as "ADD" | "SUB" || "ADD";
+        
         this.emit({ type: opType, target: temp, left: result, right });
         result = temp;
       }
@@ -431,12 +469,19 @@ export class IntermediateCodeGenerator {
       let result = this.visitUnary(ctx.children.unary[0]);
       console.log("visitFactor result:", result);
       
+      // Get the operators from the CST
+      const operators: string[] = [];
+      if (ctx.children.Mult) operators.push(...ctx.children.Mult.map((op: any) => "MUL"));
+      if (ctx.children.Div) operators.push(...ctx.children.Div.map((op: any) => "DIV"));
+      if (ctx.children.Mod) operators.push(...ctx.children.Mod.map((op: any) => "MOD"));
+      
       for (let i = 1; i < ctx.children.unary.length; i++) {
         const right = this.visitUnary(ctx.children.unary[i]);
         const temp = this.newTemp();
         
-        // Determine operator type
-        const opType = ctx.Mult ? "MUL" : ctx.Div ? "DIV" : "MOD";
+        // Use the operator for this position
+        const opType = operators[i - 1] as "MUL" | "DIV" | "MOD" || "MUL";
+        
         this.emit({ type: opType, target: temp, left: result, right });
         result = temp;
       }
@@ -514,14 +559,29 @@ export class IntermediateCodeGenerator {
   }
 
   private visitFunctionCall(ctx: any): string {
-    const funcName = ctx.Identifier[0].image;
+    console.log("visitFunctionCall called with:", ctx);
+    console.log("ctx.children:", ctx.children);
+    
+    if (!ctx.children || !ctx.children.Identifier) {
+      console.log("No Identifier found in function call");
+      return "0";
+    }
+    
+    const funcName = ctx.children.Identifier[0].image;
     const args: string[] = [];
     
-    if (ctx.argumentList) {
-      for (const arg of ctx.argumentList[0].expression) {
-        args.push(this.visitExpression(arg));
+    console.log("Function call name:", funcName);
+    
+    if (ctx.children.argumentList && ctx.children.argumentList.length > 0) {
+      console.log("Argument list found:", ctx.children.argumentList[0]);
+      if (ctx.children.argumentList[0].children && ctx.children.argumentList[0].children.expression) {
+        for (const arg of ctx.children.argumentList[0].children.expression) {
+          args.push(this.visitExpression(arg));
+        }
       }
     }
+    
+    console.log("Function call arguments:", args);
     
     const result = this.newTemp();
     this.emit({ type: "CALL", target: result, function: funcName, args });

@@ -25,6 +25,9 @@ export class CFGGenerator {
   private edges: Array<{ from: string; to: string; label?: string }> = [];
 
   generate(instructions: ThreeAddressInstruction[]): ControlFlowGraph {
+    console.log("CFGGenerator: Starting CFG generation with", instructions.length, "instructions");
+    console.log("CFGGenerator: Instructions:", instructions);
+    
     this.instructions = instructions;
     this.blocks.clear();
     this.leaders.clear();
@@ -32,22 +35,28 @@ export class CFGGenerator {
 
     // Step 1: Identify leaders (start of basic blocks)
     this.identifyLeaders();
+    console.log("CFGGenerator: Identified leaders:", Array.from(this.leaders));
 
     // Step 2: Create basic blocks
     this.createBasicBlocks();
+    console.log("CFGGenerator: Created", this.blocks.size, "basic blocks");
 
     // Step 3: Build control flow edges
     this.buildControlFlowEdges();
+    console.log("CFGGenerator: Created", this.edges.length, "edges");
 
     // Step 4: Identify entry and exit blocks
     this.identifyEntryExitBlocks();
 
-    return {
+    const result = {
       blocks: this.blocks,
       entryBlock: this.findEntryBlock(),
       exitBlocks: this.findExitBlocks(),
       edges: this.edges
     };
+    
+    console.log("CFGGenerator: Final CFG:", result);
+    return result;
   }
 
   private identifyLeaders(): void {
