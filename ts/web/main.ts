@@ -438,4 +438,202 @@ astDiagramDetails.addEventListener("toggle", () => {
   if (astDiagramDetails.open) renderAstSvg(input.value.trim(), modeSel.value as any);
 });
 
+// Enhanced Code Editor Functionality
+class CodeEditor {
+  private textarea: HTMLTextAreaElement;
+  private lineNumbers: HTMLElement;
+  private lineCount: HTMLElement;
+  private suggestionsDropdown: HTMLElement;
+  private currentSuggestions: string[] = [];
+  private selectedSuggestionIndex = 0;
+  private isShowingSuggestions = false;
+
+  // Language keywords and suggestions
+  private keywords = [
+    'let', 'if', 'else', 'while', 'function', 'return', 'print',
+    'true', 'false', 'and', 'or', 'not'
+  ];
+
+  private operators = [
+    '+', '-', '*', '/', '%', '==', '!=', '<', '>', '<=', '>=', '&&', '||', '!'
+  ];
+
+  constructor(textarea: HTMLTextAreaElement) {
+    this.textarea = textarea;
+    this.lineNumbers = document.getElementById('line-numbers')!;
+    this.lineCount = document.getElementById('line-count')!;
+    this.suggestionsDropdown = document.getElementById('suggestions-dropdown')!;
+    
+    this.setupEventListeners();
+    this.updateLineNumbers();
+  }
+
+  private setupEventListeners() {
+    // Update line numbers on input
+    this.textarea.addEventListener('input', () => {
+      this.updateLineNumbers();
+      this.handleInput();
+    });
+
+    // Handle key events for suggestions
+    this.textarea.addEventListener('keydown', (e) => {
+      if (this.isShowingSuggestions) {
+        this.handleSuggestionKeydown(e);
+      }
+    });
+
+    // Hide suggestions when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!this.textarea.contains(e.target as Node) && !this.suggestionsDropdown.contains(e.target as Node)) {
+        this.hideSuggestions();
+      }
+    });
+
+    // Handle suggestion clicks
+    this.suggestionsDropdown.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      if (target.classList.contains('suggestion-item')) {
+        this.selectSuggestion(target.textContent || '');
+      }
+    });
+  }
+
+  private updateLineNumbers() {
+    const lines = this.textarea.value.split('\n');
+    const lineCount = lines.length;
+    
+    // Update line numbers display
+    this.lineNumbers.textContent = lines.map((_, i) => i + 1).join('\n');
+    
+    // Update line count in header
+    this.lineCount.textContent = `${lineCount} line${lineCount !== 1 ? 's' : ''}`;
+    
+    // Sync scroll
+    this.textarea.addEventListener('scroll', () => {
+      this.lineNumbers.scrollTop = this.textarea.scrollTop;
+    });
+  }
+
+  private handleInput() {
+    const cursorPos = this.textarea.selectionStart;
+    const textBeforeCursor = this.textarea.value.substring(0, cursorPos);
+    const currentWord = this.getCurrentWord(textBeforeCursor);
+    
+    if (currentWord.length >= 1) {
+      this.showSuggestions(currentWord);
+    } else {
+      this.hideSuggestions();
+    }
+  }
+
+  private getCurrentWord(text: string): string {
+    const words = text.split(/\s+/);
+    return words[words.length - 1] || '';
+  }
+
+  private showSuggestions(currentWord: string) {
+    const allSuggestions = [...this.keywords, ...this.operators];
+    this.currentSuggestions = allSuggestions.filter(suggestion => 
+      suggestion.toLowerCase().startsWith(currentWord.toLowerCase())
+    );
+
+    if (this.currentSuggestions.length > 0) {
+      this.renderSuggestions();
+      this.isShowingSuggestions = true;
+    } else {
+      this.hideSuggestions();
+    }
+  }
+
+  private renderSuggestions() {
+    this.suggestionsDropdown.innerHTML = '';
+    
+    this.currentSuggestions.forEach((suggestion, index) => {
+      const item = document.createElement('div');
+      item.className = 'suggestion-item';
+      if (index === this.selectedSuggestionIndex) {
+        item.classList.add('selected');
+      }
+      
+      const keywordSpan = document.createElement('span');
+      keywordSpan.className = 'suggestion-keyword';
+      keywordSpan.textContent = suggestion;
+      
+      const typeSpan = document.createElement('span');
+      typeSpan.className = 'suggestion-type';
+      typeSpan.textContent = this.keywords.includes(suggestion) ? 'keyword' : 'operator';
+      
+      item.appendChild(keywordSpan);
+      item.appendChild(typeSpan);
+      this.suggestionsDropdown.appendChild(item);
+    });
+    
+    this.suggestionsDropdown.style.display = 'block';
+  }
+
+  private handleSuggestionKeydown(e: KeyboardEvent) {
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        this.selectedSuggestionIndex = Math.min(
+          this.selectedSuggestionIndex + 1, 
+          this.currentSuggestions.length - 1
+        );
+        this.updateSuggestionSelection();
+        break;
+        
+      case 'ArrowUp':
+        e.preventDefault();
+        this.selectedSuggestionIndex = Math.max(this.selectedSuggestionIndex - 1, 0);
+        this.updateSuggestionSelection();
+        break;
+        
+      case 'Enter':
+        e.preventDefault();
+        this.selectSuggestion(this.currentSuggestions[this.selectedSuggestionIndex]);
+        break;
+        
+      case 'Escape':
+        this.hideSuggestions();
+        break;
+    }
+  }
+
+  private updateSuggestionSelection() {
+    const items = this.suggestionsDropdown.querySelectorAll('.suggestion-item');
+    items.forEach((item, index) => {
+      item.classList.toggle('selected', index === this.selectedSuggestionIndex);
+    });
+  }
+
+  private selectSuggestion(suggestion: string) {
+    const cursorPos = this.textarea.selectionStart;
+    const textBeforeCursor = this.textarea.value.substring(0, cursorPos);
+    const textAfterCursor = this.textarea.value.substring(cursorPos);
+    
+    // Find the current word and replace it
+    const words = textBeforeCursor.split(/\s+/);
+    const lastWord = words[words.length - 1];
+    const newText = textBeforeCursor.substring(0, textBeforeCursor.lastIndexOf(lastWord)) + 
+                   suggestion + textAfterCursor;
+    
+    this.textarea.value = newText;
+    this.textarea.setSelectionRange(
+      textBeforeCursor.lastIndexOf(lastWord) + suggestion.length,
+      textBeforeCursor.lastIndexOf(lastWord) + suggestion.length
+    );
+    
+    this.hideSuggestions();
+    this.textarea.focus();
+  }
+
+  private hideSuggestions() {
+    this.suggestionsDropdown.style.display = 'none';
+    this.isShowingSuggestions = false;
+    this.selectedSuggestionIndex = 0;
+  }
+}
+
+// Initialize enhanced code editor
+const codeEditor = new CodeEditor(input);
 
