@@ -94,7 +94,7 @@ export class CFGGenerator {
 
   private createBasicBlocks(): void {
     const leaderArray = Array.from(this.leaders).sort((a, b) => a - b);
-    
+
     for (let i = 0; i < leaderArray.length; i++) {
       const startLine = leaderArray[i];
       const endLine = i + 1 < leaderArray.length ? leaderArray[i + 1] - 1 : this.instructions.length - 1;
@@ -121,13 +121,13 @@ export class CFGGenerator {
       
       if (this.isJumpInstruction(lastInstruction)) {
         // Handle jump instructions
-        if (lastInstruction.type === "JUMP") {
+      if (lastInstruction.type === "JUMP") {
           const targetLabel = lastInstruction.target;
           const targetBlock = this.findBlockByLabel(targetLabel);
           if (targetBlock) {
             this.addEdge(blockId, targetBlock.id);
-          }
-        } else if (lastInstruction.type === "JUMP_IF_FALSE" || lastInstruction.type === "JUMP_IF_TRUE") {
+        }
+      } else if (lastInstruction.type === "JUMP_IF_FALSE" || lastInstruction.type === "JUMP_IF_TRUE") {
           const targetLabel = lastInstruction.target;
           const targetBlock = this.findBlockByLabel(targetLabel);
           if (targetBlock) {

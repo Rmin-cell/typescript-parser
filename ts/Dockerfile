@@ -18,26 +18,25 @@ COPY . .
 RUN npm run build
 
 # Stage 2: Production server
-FROM nginx:alpine AS production
+FROM node:18-alpine AS production
 
-# Install Node.js for running the built application
-RUN apk add --no-cache nodejs npm
+# Set working directory
+WORKDIR /app
 
 # Copy built application from builder stage
-COPY --from=builder /app/dist /usr/share/nginx/html
-
-# Copy custom nginx configuration
-COPY nginx.conf /etc/nginx/nginx.conf
+COPY --from=builder /app/dist ./dist
 
 # Copy package.json for runtime dependencies
-COPY --from=builder /app/package*.json /app/
+COPY --from=builder /app/package*.json ./
 
 # Install only production dependencies
-WORKDIR /app
 RUN npm ci --only=production
 
-# Expose port 80
-EXPOSE 80
+# Create a simple Express server
+RUN echo 'const express = require("express"); const path = require("path"); const app = express(); app.use(express.static(path.join(__dirname, "dist"))); app.get("*", (req, res) => { res.sendFile(path.join(__dirname, "dist", "index.html")); }); const PORT = process.env.PORT || 3000; app.listen(PORT, "0.0.0.0", () => { console.log(`Server running on port ${PORT}`); });' > server.js
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Expose port 3000
+EXPOSE 3000
+
+# Start the server
+CMD ["node", "server.js"]
