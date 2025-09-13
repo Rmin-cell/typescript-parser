@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "8080:80"
+      - "8080:3000"
     container_name: compiler-visualizer
     restart: unless-stopped
     environment:
