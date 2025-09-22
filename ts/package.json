@@ -11,7 +11,9 @@
     "simple": "ts-node src/simple/cli.ts",
     "compiler": "ts-node src/compiler/cli.ts",
     "dev": "vite",
+    "dev:terminal": "vite --open terminal.html",
     "dev:react": "vite --open index-react.html",
+    "start:terminal": "npm run dev:terminal",
     "start:react": "npm run dev:react"
   },
   "dependencies": {
@@ -31,6 +33,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.14.11",
+    "@vitejs/plugin-react": "^4.3.3",
     "ts-node": "^10.9.2",
     "typescript": "^5.5.4",
     "vite": "^5.4.0"

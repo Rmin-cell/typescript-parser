@@ -1,0 +1,995 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Compiler Visualizer</title>
+    <!-- Google Fonts for better typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS for better styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons for better icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+      :root {
+        /* VS Code Dark Theme */
+        --bg: #1e1e1e;
+        --panel: #252526;
+        --border: #3c3c3c;
+        --text: #cccccc;
+        --text-muted: #969696;
+        --accent: #007acc;
+        --accent-hover: #005a9e;
+        --code-bg: #1e1e1e;
+        --success: #4ec9b0;
+        --error: #f44747;
+        --warning: #ffcc02;
+        --info: #569cd6;
+        --keyword: #569cd6;
+        --string: #ce9178;
+        --number: #b5cea8;
+        --comment: #6a9955;
+        --function: #dcdcaa;
+        --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+        --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
+        --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
+        --radius-sm: 6px;
+        --radius-md: 8px;
+        --radius-lg: 12px;
+        --radius-xl: 16px;
+        --spacing-xs: 4px;
+        --spacing-sm: 8px;
+        --spacing-md: 12px;
+        --spacing-lg: 16px;
+        --spacing-xl: 20px;
+        --spacing-2xl: 24px;
+        --spacing-3xl: 32px;
+        --spacing-4xl: 40px;
+      }
+      
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      
+      body { 
+        background: var(--bg); 
+        color: var(--text); 
+        font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', Arial, sans-serif; 
+        line-height: 1.6;
+        padding: var(--spacing-2xl);
+        min-height: 100vh;
+      }
+      
+      .container { 
+        max-width: 1200px; 
+        margin: 0 auto; 
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-2xl);
+      }
+      
+      .header {
+        text-align: center;
+        padding: var(--spacing-3xl) 0;
+        background: linear-gradient(135deg, var(--panel) 0%, #1a1a1a 50%, var(--code-bg) 100%);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border);
+        position: relative;
+        overflow: hidden;
+      }
+      
+      .header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(45deg, transparent 30%, rgba(0, 122, 204, 0.1) 50%, transparent 70%);
+        animation: shimmer 3s ease-in-out infinite;
+      }
+      
+      @keyframes shimmer {
+        0%, 100% { transform: translateX(-100%); }
+        50% { transform: translateX(100%); }
+      }
+      
+      h1 { 
+        margin: 0; 
+        font-size: 2.5rem; 
+        font-weight: 700; 
+        color: var(--accent);
+        text-shadow: 0 0 10px rgba(0, 122, 204, 0.5);
+        position: relative;
+        z-index: 1;
+        font-family: 'Courier New', monospace;
+        letter-spacing: 2px;
+      }
+      
+      h1::before {
+        content: '> ';
+        color: var(--success);
+        font-weight: bold;
+      }
+      
+      h1::after {
+        content: ' <';
+        color: var(--success);
+        font-weight: bold;
+      }
+      
+      .subtitle {
+        margin-top: var(--spacing-md);
+        color: var(--text-muted);
+        font-size: 1.1rem;
+        font-weight: 400;
+            font-family: 'Courier New', monospace;
+        position: relative;
+        z-index: 1;
+      }
+      
+      .subtitle::before {
+        content: '// ';
+        color: var(--comment);
+      }
+      
+      .toolbar { 
+        display: flex; 
+        align-items: center; 
+        justify-content: center;
+        gap: var(--spacing-lg); 
+        padding: var(--spacing-xl);
+        background: linear-gradient(135deg, var(--panel) 0%, #2a2a2a 100%);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border);
+        flex-wrap: wrap;
+        position: relative;
+        overflow: hidden;
+      }
+      
+      .toolbar::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      }
+      
+      .toolbar label { 
+        font-weight: 600; 
+        color: var(--text);
+        font-size: 0.95rem;
+      }
+      
+      .toolbar select { 
+        padding: var(--spacing-md) var(--spacing-lg); 
+        border: 1px solid var(--border); 
+        border-radius: var(--radius-md); 
+        background: var(--panel); 
+        color: var(--text);
+        font-size: 0.95rem;
+        min-width: 140px;
+        transition: all 0.2s ease;
+      }
+      
+      .toolbar button { 
+        padding: var(--spacing-md) var(--spacing-xl); 
+        background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%); 
+        color: white; 
+        border: 1px solid var(--accent); 
+        border-radius: var(--radius-md); 
+        cursor: pointer; 
+        font-weight: 600;
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        transition: all 0.2s ease;
+        box-shadow: 0 0 10px rgba(0, 122, 204, 0.3);
+        font-family: 'Courier New', monospace;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      
+      .toolbar button:hover { 
+        background: linear-gradient(135deg, var(--accent-hover) 0%, var(--accent) 100%); 
+        transform: translateY(-2px); 
+        box-shadow: 0 0 20px rgba(0, 122, 204, 0.6);
+        border-color: var(--success);
+      }
+      
+      .toolbar button:active { 
+        transform: translateY(0); 
+        box-shadow: var(--shadow-sm);
+      }
+      
+      .main-content {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-2xl);
+      }
+      
+      .row { 
+        display: grid; 
+        grid-template-columns: 1fr 1fr; 
+        gap: var(--spacing-xl); 
+        align-items: stretch;
+      }
+      
+      .panel { 
+        border: 1px solid var(--border); 
+        border-radius: var(--radius-lg); 
+        padding: var(--spacing-xl); 
+        background: linear-gradient(135deg, var(--panel) 0%, #2a2a2a 100%); 
+        box-shadow: var(--shadow-sm);
+        transition: all 0.2s ease;
+        position: relative;
+        overflow: hidden;
+        }
+      
+      .panel::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, var(--accent), transparent);
+        opacity: 0.5;
+      }
+      
+      .panel:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-1px);
+      }
+      
+      .panel.stack { 
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-lg);
+      }
+      
+      .panel.stack > textarea, 
+      .panel.stack > pre { 
+        flex: 1;
+        min-height: 120px;
+      }
+      
+      h3 { 
+        margin: 0 0 var(--spacing-lg) 0; 
+        font-size: 1.1rem; 
+        font-weight: 600; 
+        color: var(--text);
+        display: flex; 
+        align-items: center; 
+        gap: var(--spacing-sm);
+        padding-bottom: var(--spacing-sm);
+        border-bottom: 2px solid var(--border);
+      }
+      
+      textarea { 
+        width: 100%; 
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; 
+        border-radius: var(--radius-md); 
+        border: 1px solid var(--border); 
+        padding: var(--spacing-lg); 
+        background: var(--panel); 
+        color: var(--text);
+        font-size: 0.95rem;
+        line-height: 1.5;
+        resize: vertical;
+        transition: all 0.2s ease;
+      }
+
+      /* Enhanced Code Editor Styles */
+      .code-editor-container {
+        position: relative;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        background: #1e1e1e;
+        overflow: hidden;
+        font-family: 'Fira Code', 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
+      }
+
+      .code-editor-header {
+        background: #2d2d30;
+        padding: var(--spacing-sm) var(--spacing-md);
+        border-bottom: 1px solid var(--border);
+        font-size: 12px;
+        color: var(--text-muted);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-family: 'Courier New', monospace;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      
+      .code-editor-header::before {
+        content: '● ● ●';
+        color: var(--error);
+        margin-right: var(--spacing-sm);
+      }
+
+      .code-editor-wrapper {
+        display: flex;
+        position: relative;
+      }
+
+      .line-numbers {
+        background: #1e1e1e;
+        color: #858585;
+        padding: var(--spacing-md) var(--spacing-sm);
+        border-right: 1px solid var(--border);
+        font-size: 14px;
+        line-height: 1.5;
+        user-select: none;
+        min-width: 40px;
+        text-align: right;
+        white-space: pre;
+        font-family: 'Fira Code', 'JetBrains Mono', monospace;
+      }
+
+      .code-textarea {
+        flex: 1;
+        border: none;
+        outline: none;
+        padding: var(--spacing-md);
+        font-size: 14px;
+        line-height: 1.5;
+        background: transparent;
+        color: #d4d4d4;
+        resize: none;
+        font-family: 'Fira Code', 'JetBrains Mono', monospace;
+        overflow: hidden;
+        caret-color: var(--accent);
+      }
+
+      .suggestions-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-top: none;
+        border-radius: 0 0 var(--radius-md) var(--radius-md);
+        max-height: 200px;
+        overflow-y: auto;
+        z-index: 1000;
+        box-shadow: var(--shadow-lg);
+        display: none;
+      }
+
+      .suggestion-item {
+        padding: var(--spacing-sm) var(--spacing-md);
+        cursor: pointer;
+        border-bottom: 1px solid var(--border);
+        transition: background-color 0.2s ease;
+      }
+
+      .suggestion-item:hover,
+      .suggestion-item.selected {
+        background: var(--code-bg);
+      }
+
+      .suggestion-item:last-child {
+        border-bottom: none;
+      }
+
+      .suggestion-keyword {
+        color: var(--accent);
+        font-weight: 600;
+      }
+
+      .suggestion-type {
+        color: var(--text-muted);
+        font-size: 12px;
+        margin-left: var(--spacing-sm);
+      }
+
+      /* Examples Section Styles */
+      .examples-section {
+        background: var(--panel);
+        border-radius: var(--radius-lg);
+        padding: var(--spacing-xl);
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border);
+        margin-bottom: var(--spacing-2xl);
+      }
+
+      .examples-section h3 {
+        margin: 0 0 var(--spacing-lg) 0;
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--text);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        padding-bottom: var(--spacing-sm);
+        border-bottom: 2px solid var(--border);
+      }
+
+      .examples-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: var(--spacing-xl);
+      }
+
+      .example-category {
+        background: var(--code-bg);
+        border-radius: var(--radius-md);
+        padding: var(--spacing-lg);
+        border: 1px solid var(--border);
+      }
+
+      .example-category h4 {
+        margin: 0 0 var(--spacing-md) 0;
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--accent);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .example-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--spacing-sm);
+      }
+
+      .example-btn {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: var(--spacing-sm) var(--spacing-md);
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: var(--text);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+      }
+
+      .example-btn:hover {
+        background: var(--accent);
+        color: white;
+        border-color: var(--accent);
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-md);
+      }
+
+      .example-btn:active {
+        transform: translateY(0);
+        box-shadow: var(--shadow-sm);
+      }
+
+      .example-btn[data-mode="calc"]:hover {
+        background: var(--success);
+        border-color: var(--success);
+      }
+
+      .example-btn[data-mode="simple"]:hover {
+        background: var(--warning);
+        border-color: var(--warning);
+      }
+
+      .example-btn[data-mode="compiler"]:hover {
+        background: var(--accent);
+        border-color: var(--accent);
+      }
+
+      /* Responsive adjustments for examples */
+      @media (max-width: 768px) {
+        .examples-grid {
+          grid-template-columns: 1fr;
+          gap: var(--spacing-lg);
+        }
+        
+        .example-buttons {
+          flex-direction: column;
+        }
+        
+        .example-btn {
+          justify-content: center;
+        }
+      }
+      
+      pre { 
+        background: #1e1e1e; 
+        padding: var(--spacing-lg); 
+        overflow: auto; 
+        border-radius: var(--radius-md); 
+        border: 1px solid var(--border);
+        font-family: 'Fira Code', 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        font-size: 0.9rem;
+        line-height: 1.5;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        color: #d4d4d4;
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
+      }
+      
+      #result { 
+        min-height: 120px; 
+      }
+      
+      details {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        margin: var(--spacing-md) 0;
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+      }
+      
+      details summary {
+        padding: var(--spacing-lg);
+        background: var(--panel);
+        border-bottom: 1px solid var(--border);
+        cursor: pointer;
+        font-weight: 600;
+        color: var(--text);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        transition: background-color 0.2s ease;
+        list-style: none;
+      }
+      
+      details summary:hover {
+        background: var(--hover);
+      }
+      
+      details summary::-webkit-details-marker {
+        display: none;
+      }
+      
+      details summary::before {
+        content: "▶";
+        transition: transform 0.2s ease;
+        margin-right: var(--spacing-xs);
+      }
+      
+      details[open] summary::before {
+        transform: rotate(90deg);
+      }
+      
+      details > div {
+        padding: var(--spacing-lg);
+      }
+      
+      details pre {
+        margin: 0;
+        background: var(--code-bg);
+        border: none;
+        border-radius: var(--radius-md);
+      }
+      
+      
+      .loading { 
+        opacity: 0.7; 
+        pointer-events: none;
+      }
+      
+      .error { 
+        border-color: var(--error) !important; 
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important; 
+      }
+      
+      .success { 
+        border-color: var(--success) !important; 
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important; 
+      }
+      
+      textarea:focus, 
+      select:focus { 
+        outline: none; 
+        border-color: var(--accent); 
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); 
+      }
+      
+      button:focus { 
+        outline: none; 
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3); 
+      }
+      
+      /* Responsive Design */
+      @media (max-width: 768px) {
+        body {
+          padding: var(--spacing-lg);
+        }
+        
+        .container {
+          gap: var(--spacing-lg);
+        }
+        
+        .row {
+          grid-template-columns: 1fr;
+          gap: var(--spacing-lg);
+        }
+        
+        .toolbar {
+          flex-direction: column;
+          align-items: stretch;
+          gap: var(--spacing-md);
+        }
+        
+        .toolbar select,
+        .toolbar button {
+          width: 100%;
+          justify-content: center;
+        }
+        
+        h1 {
+          font-size: 2rem;
+        }
+        
+        .header {
+          padding: var(--spacing-2xl) var(--spacing-lg);
+        }
+      }
+      
+      @media (max-width: 480px) {
+        body {
+          padding: var(--spacing-md);
+        }
+        
+        h1 {
+          font-size: 1.75rem;
+        }
+        
+        .panel {
+          padding: var(--spacing-lg);
+        }
+        
+        .toolbar {
+          padding: var(--spacing-lg);
+        }
+      }
+      
+      /* Smooth animations */
+      * { 
+        transition: all 0.2s ease; 
+      }
+      
+      /* Custom scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      
+      ::-webkit-scrollbar-track {
+        background: var(--code-bg);
+        border-radius: var(--radius-sm);
+      }
+      
+      ::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: var(--radius-sm);
+      }
+      
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--text-muted);
+      }
+      
+      /* CFG Visualization Styles */
+      #cfg-svg {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        overflow: visible;
+      }
+      
+      .cfg-node {
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      
+      .cfg-node:hover circle {
+        stroke-width: 3;
+        filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+      }
+      
+      .cfg-node:hover text {
+        font-weight: bold;
+      }
+      
+      .instruction-details {
+        pointer-events: none;
+      }
+
+      /* Register Allocation Styles */
+      .register-allocation-container {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      }
+
+      .btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+            font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+      }
+
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .btn-primary {
+        background: #007bff;
+        color: white;
+      }
+
+      .btn-primary:hover:not(:disabled) {
+        background: #0056b3;
+      }
+
+      .btn-secondary {
+        background: #6c757d;
+        color: white;
+      }
+
+      .btn-secondary:hover:not(:disabled) {
+        background: #545b62;
+      }
+
+      .btn-success {
+        background: #28a745;
+        color: white;
+      }
+
+      .btn-success:hover:not(:disabled) {
+        background: #1e7e34;
+      }
+      
+      /* Syntax Highlighting Classes */
+      .syntax-keyword { color: var(--keyword); font-weight: bold; }
+      .syntax-string { color: var(--string); }
+      .syntax-number { color: var(--number); }
+      .syntax-comment { color: var(--comment); font-style: italic; }
+      .syntax-function { color: var(--function); }
+      .syntax-operator { color: var(--accent); }
+      .syntax-punctuation { color: var(--text-muted); }
+      .syntax-error { color: var(--error); background: rgba(244, 71, 71, 0.1); }
+      .syntax-success { color: var(--success); }
+      .syntax-warning { color: var(--warning); }
+      
+      /* Terminal-style cursor animation */
+      .code-textarea::after {
+        content: '|';
+        color: var(--accent);
+        animation: blink 1s infinite;
+      }
+      
+      @keyframes blink {
+        0%, 50% { opacity: 1; }
+        51%, 100% { opacity: 0; }
+      }
+      
+      /* Matrix-style background effect for header */
+      .header::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: 
+          radial-gradient(circle at 20% 50%, rgba(0, 122, 204, 0.1) 0%, transparent 50%),
+          radial-gradient(circle at 80% 20%, rgba(78, 201, 176, 0.1) 0%, transparent 50%),
+          radial-gradient(circle at 40% 80%, rgba(86, 156, 214, 0.1) 0%, transparent 50%);
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>Compiler Visualizer</h1>
+        <div class="subtitle">Interactive Compiler</div>
+      </div>
+      
+      <div class="toolbar">
+        <label for="mode">Mode</label>
+        <select id="mode">
+          <option value="calc">Calculator</option>
+          <option value="simple">Simple</option>
+          <option value="compiler">Compiler</option>
+        </select>
+        <button id="run">
+          <i data-lucide="play"></i>
+          Run
+          <span style="font-size: 11px; opacity: 0.7; margin-left: 4px;">⌘+Enter</span>
+        </button>
+      </div>
+      
+      <!-- Example Code Snippets -->
+      <div class="examples-section">
+        <h3>
+          <i data-lucide="lightbulb"></i>
+          Try These Examples
+        </h3>
+        <div class="examples-grid">
+          <div class="example-category">
+            <h4>Calculator Mode</h4>
+            <div class="example-buttons">
+              <button class="example-btn" data-code="3 + 5 * (10 - 4)" data-mode="calc">Basic Math</button>
+              <button class="example-btn" data-code="(2 + 3) * 4 - 1" data-mode="calc">Complex Expression</button>
+              <button class="example-btn" data-code="10 / 2 + 3 * 4" data-mode="calc">Order of Operations</button>
+            </div>
+          </div>
+          
+          <div class="example-category">
+            <h4>Simple Mode</h4>
+            <div class="example-buttons">
+              <button class="example-btn" data-code="hello" data-mode="simple">String</button>
+              <button class="example-btn" data-code="123" data-mode="simple">Number</button>
+              <button class="example-btn" data-code="true" data-mode="simple">Boolean</button>
+            </div>
+          </div>
+          
+          <div class="example-category">
+            <h4>Compiler Mode</h4>
+            <div class="example-buttons">
+              <button class="example-btn" data-code="let x = 10&#10;print x" data-mode="compiler">Variables</button>
+              <button class="example-btn" data-code="let age = 18&#10;if (age >= 18) {&#10;    print &quot;Adult&quot;&#10;} else {&#10;    print &quot;Minor&quot;&#10;}" data-mode="compiler">If-Else</button>
+              <button class="example-btn" data-code="let i = 0&#10;while (i < 3) {&#10;    print i&#10;    i = i + 1&#10;}" data-mode="compiler">While Loop</button>
+              <button class="example-btn" data-code="function add(a, b) {&#10;    return a + b&#10;}&#10;let result = add(5, 3)&#10;print result" data-mode="compiler">Functions</button>
+              <button class="example-btn" data-code="let a = 10&#10;let b = 5&#10;let result = (a + b) * 2&#10;print result" data-mode="compiler">Expressions</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="main-content">
+        <div class="row">
+          <div class="panel stack">
+            <h3>
+              <i data-lucide="edit-3"></i>
+              Expression
+            </h3>
+            <div class="code-editor-container">
+              <div class="code-editor-header">
+                <span>Code Editor</span>
+                <span id="line-count">1 line</span>
+              </div>
+              <div class="code-editor-wrapper">
+                <div class="line-numbers" id="line-numbers">1</div>
+                <textarea id="input" class="code-textarea" placeholder="Type an expression (Calculator: 3 + 5 * (10 - 4); Simple: hello; 123; Compiler: let x = 10; print x)"></textarea>
+              </div>
+              <div class="suggestions-dropdown" id="suggestions-dropdown"></div>
+            </div>
+          </div>
+          <div class="panel stack">
+            <h3>
+              <i data-lucide="calculator"></i>
+              Result
+            </h3>
+            <pre id="result"></pre>
+          </div>
+        </div>
+        
+        <details id="tokens-details">
+          <summary>
+            <i data-lucide="hash"></i>
+            Tokens
+          </summary>
+          <div>
+            <pre id="tokens"></pre>
+          </div>
+        </details>
+        
+        <details id="ast-details">
+          <summary>
+            <i data-lucide="code"></i>
+            AST (JSON)
+          </summary>
+          <div>
+            <pre id="ast"></pre>
+          </div>
+        </details>
+        
+        <details id="ast-diagram-details">
+          <summary>
+            <i data-lucide="tree-pine"></i>
+            AST Diagram
+          </summary>
+          <div>
+            <svg id="ast-svg" width="100%" height="560" viewBox="0 0 1100 560" style="background: var(--code-bg); border: 1px solid var(--border); border-radius: var(--radius-md);"></svg>
+          </div>
+        </details>
+        
+        <!-- Compiler-specific panels -->
+        <div id="compiler-panels" style="display: none;">
+          <details id="symbol-table-details">
+            <summary>
+              <i data-lucide="table"></i>
+              Symbol Table
+            </summary>
+            <div>
+              <pre id="symbol-table"></pre>
+            </div>
+          </details>
+          
+          <details id="three-address-details">
+            <summary>
+              <i data-lucide="code-2"></i>
+              Three-Address Code
+            </summary>
+            <div>
+              <pre id="three-address"></pre>
+            </div>
+          </details>
+          
+          <details id="cpu-code-details">
+            <summary>
+              <i data-lucide="cpu"></i>
+              CPU Code (Assembly-like)
+            </summary>
+            <div>
+              <pre id="cpu-code"></pre>
+            </div>
+          </details>
+
+          <details id="cfg-details">
+            <summary>
+              <i data-lucide="git-branch"></i>
+              Control Flow Graph
+            </summary>
+            <div>
+              <div id="cfg-container" style="text-align: center; padding: 20px;">
+                <div id="cfg-svg"></div>
+              </div>
+            </div>
+          </details>
+
+          <details id="register-allocation-details">
+            <summary>
+              <i data-lucide="palette"></i>
+              Register Allocation
+            </summary>
+            <div>
+              <div id="register-allocation-container"></div>
+            </div>
+          </details>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/web/main.ts"></script>
+    <script>
+      // Initialize Lucide icons
+      lucide.createIcons();
+      
+      // Check if we came from terminal and set the mode
+      document.addEventListener('DOMContentLoaded', () => {
+        const selectedMode = localStorage.getItem('selectedMode');
+        if (selectedMode) {
+          const modeSelect = document.getElementById('mode');
+          if (modeSelect) {
+            modeSelect.value = selectedMode;
+            // Trigger change event to update the interface
+            modeSelect.dispatchEvent(new Event('change'));
+          }
+          // Clear the stored mode
+          localStorage.removeItem('selectedMode');
+        }
+      });
+    </script>
+  </body>
+</html>

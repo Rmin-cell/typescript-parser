@@ -1,0 +1,2291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terminal - Compiler Visualizer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Fira Code', 'JetBrains Mono', 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+            background: #1e1e1e;
+            color: #f0f0f0;
+            height: 100vh;
+            overflow: hidden;
+            user-select: text;
+        }
+        
+        .terminal-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: #1e1e1e;
+        }
+        
+        .terminal-header {
+            background: #2d2d30;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #3c3c3c;
+        }
+        
+        .terminal-title {
+            color: #cccccc;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .terminal-controls {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .control-btn {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .close { background: #ff5f56; }
+        .minimize { background: #ffbd2e; }
+        .maximize { background: #27ca3f; }
+        
+        .terminal-body {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+            background: #1e1e1e;
+            font-size: 14px;
+            line-height: 1.4;
+            font-family: 'Fira Code', 'JetBrains Mono', 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+            background-image: 
+                radial-gradient(circle at 1px 1px, rgba(255,255,255,0.05) 1px, transparent 0);
+            background-size: 20px 20px;
+        }
+        
+        .terminal-line {
+            margin-bottom: 4px;
+            display: flex;
+            align-items: flex-start;
+            min-height: 20px;
+        }
+        
+        .prompt {
+            color: #4ec9b0;
+            margin-right: 8px;
+            white-space: nowrap;
+            font-weight: 500;
+        }
+        
+        .command {
+            color: #f0f0f0;
+            flex: 1;
+            word-wrap: break-word;
+        }
+        
+        .output {
+            color: #cccccc;
+            margin-left: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .error {
+            color: #f44747;
+        }
+        
+        .success {
+            color: #4ec9b0;
+        }
+        
+        .warning {
+            color: #ffcc02;
+        }
+        
+        .info {
+            color: #569cd6;
+        }
+        
+        .keyword {
+            color: #569cd6;
+            font-weight: bold;
+        }
+        
+        .string {
+            color: #ce9178;
+        }
+        
+        .number {
+            color: #b5cea8;
+        }
+        
+        .comment {
+            color: #6a9955;
+            font-style: italic;
+        }
+        
+        .input-line {
+            display: flex;
+            align-items: center;
+            margin-top: 8px;
+        }
+        
+        .input-line .prompt {
+            color: #4ec9b0;
+            margin-right: 8px;
+        }
+        
+        .input-line input {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #f0f0f0;
+            font-family: inherit;
+            font-size: inherit;
+            flex: 1;
+            caret-color: #4ec9b0;
+            text-shadow: 0 0 5px rgba(78, 201, 176, 0.3);
+        }
+        
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            height: 16px;
+            background: #4ec9b0;
+            animation: blink 1s infinite;
+            margin-left: 2px;
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+        
+        .help-section {
+            margin: 16px 0;
+            padding: 12px;
+            background: #252526;
+            border-radius: 6px;
+            border-left: 4px solid #4ec9b0;
+        }
+        
+        .help-section h3 {
+            color: #4ec9b0;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+        
+        .help-section ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .help-section li {
+            margin: 4px 0;
+            padding: 4px 0;
+        }
+        
+        .help-section .command-name {
+            color: #569cd6;
+            font-weight: bold;
+            display: inline-block;
+            width: 120px;
+        }
+        
+        .help-section .command-desc {
+            color: #cccccc;
+        }
+        
+        .mode-indicator {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+        
+        .mode-calc {
+            background: #4ec9b0;
+            color: #1e1e1e;
+        }
+        
+        .mode-simple {
+            background: #ffcc02;
+            color: #1e1e1e;
+        }
+        
+        .mode-compiler {
+            background: #569cd6;
+            color: #1e1e1e;
+        }
+        
+        .welcome-message {
+            margin-bottom: 20px;
+            padding: 16px;
+            background: linear-gradient(135deg, #252526 0%, #1e1e1e 100%);
+            border-radius: 8px;
+            border: 1px solid #3c3c3c;
+        }
+        
+        .welcome-message h1 {
+            color: #4ec9b0;
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        
+        .welcome-message p {
+            color: #cccccc;
+            margin-bottom: 4px;
+        }
+        
+        .compiler-interface {
+            display: none;
+            margin-top: 20px;
+            padding: 16px;
+            background: #252526;
+            border-radius: 8px;
+            border: 1px solid #3c3c3c;
+        }
+        
+        .compiler-interface.active {
+            display: block;
+        }
+        
+        .compiler-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #3c3c3c;
+        }
+        
+        .compiler-title {
+            color: #4ec9b0;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .back-btn {
+            background: #3c3c3c;
+            color: #f0f0f0;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .back-btn:hover {
+            background: #4c4c4c;
+        }
+        
+        .code-input {
+            width: 100%;
+            background: #1e1e1e;
+            border: 1px solid #3c3c3c;
+            border-radius: 4px;
+            padding: 12px;
+            color: #f0f0f0;
+            font-family: inherit;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .run-btn {
+            background: #4ec9b0;
+            color: #1e1e1e;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 8px;
+        }
+        
+        .run-btn:hover {
+            background: #3ba89a;
+        }
+        
+        .result-output {
+            margin-top: 16px;
+            padding: 12px;
+            background: #1e1e1e;
+            border-radius: 4px;
+            border: 1px solid #3c3c3c;
+            white-space: pre-wrap;
+            font-family: 'Fira Code', monospace;
+            min-height: 100px;
+        }
+        
+        .scrollbar {
+            scrollbar-width: thin;
+            scrollbar-color: #3c3c3c #1e1e1e;
+        }
+        
+        .scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .scrollbar::-webkit-scrollbar-track {
+            background: #1e1e1e;
+        }
+        
+        .scrollbar::-webkit-scrollbar-thumb {
+            background: #3c3c3c;
+            border-radius: 4px;
+        }
+        
+        .scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #4c4c4c;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Terminal-specific effects */
+        .typing-effect {
+            overflow: hidden;
+            border-right: 2px solid #4ec9b0;
+            white-space: nowrap;
+            animation: typing 2s steps(40, end), blink-caret 0.75s step-end infinite;
+        }
+        
+        @keyframes typing {
+            from { width: 0; }
+            to { width: 100%; }
+        }
+        
+        @keyframes blink-caret {
+            from, to { border-color: transparent; }
+            50% { border-color: #4ec9b0; }
+        }
+        
+        .terminal-glow {
+            text-shadow: 0 0 10px rgba(78, 201, 176, 0.5);
+        }
+        
+        .command-echo {
+            color: #4ec9b0;
+            font-weight: bold;
+        }
+        
+        .terminal-sound {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .matrix-rain {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 1;
+        }
+        
+        .matrix-char {
+            position: absolute;
+            color: #4ec9b0;
+            font-family: 'Fira Code', monospace;
+            font-size: 12px;
+            opacity: 0.1;
+            animation: matrix-fall linear infinite;
+        }
+        
+        @keyframes matrix-fall {
+            0% { transform: translateY(-100vh); opacity: 0; }
+            10% { opacity: 0.1; }
+            90% { opacity: 0.1; }
+            100% { transform: translateY(100vh); opacity: 0; }
+        }
+        
+        .terminal-focus {
+            box-shadow: 0 0 20px rgba(78, 201, 176, 0.3);
+        }
+        
+        .command-suggestion {
+            color: #6a9955;
+            font-style: italic;
+            opacity: 0.7;
+        }
+        
+        .terminal-error {
+            color: #f44747;
+            text-shadow: 0 0 5px rgba(244, 71, 71, 0.3);
+        }
+        
+        .terminal-success {
+            color: #4ec9b0;
+            text-shadow: 0 0 5px rgba(78, 201, 176, 0.3);
+        }
+        
+        .terminal-warning {
+            color: #ffcc02;
+            text-shadow: 0 0 5px rgba(255, 204, 2, 0.3);
+        }
+        
+        .terminal-info {
+            color: #569cd6;
+            text-shadow: 0 0 5px rgba(86, 156, 214, 0.3);
+        }
+        
+        .scan-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #4ec9b0, transparent);
+            animation: scan 3s linear infinite;
+            opacity: 0.3;
+        }
+        
+        @keyframes scan {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(100vh); }
+        }
+        
+        /* Enhanced mode interface styles */
+        .code-section, .results-section, .features-section {
+            margin: 16px 0;
+            padding: 16px;
+            background: #252526;
+            border-radius: 8px;
+            border: 1px solid #3c3c3c;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+        }
+        
+        .feature-item {
+            padding: 12px;
+            background: #1e1e1e;
+            border-radius: 6px;
+            border: 1px solid #3c3c3c;
+            font-size: 14px;
+        }
+        
+        .feature-item strong {
+            color: #4ec9b0;
+            display: block;
+            margin-bottom: 4px;
+        }
+        
+        .compiler-panels {
+            margin-top: 16px;
+        }
+        
+        .panel-details {
+            margin: 8px 0;
+            background: #252526;
+            border: 1px solid #3c3c3c;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .panel-details summary {
+            padding: 12px 16px;
+            background: #2d2d30;
+            cursor: pointer;
+            font-weight: 600;
+            color: #f0f0f0;
+            border-bottom: 1px solid #3c3c3c;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background-color 0.2s ease;
+        }
+        
+        .panel-details summary:hover {
+            background: #3c3c3c;
+        }
+        
+        .panel-details summary::before {
+            content: "▶";
+            transition: transform 0.2s ease;
+            color: #4ec9b0;
+        }
+        
+        .panel-details[open] summary::before {
+            transform: rotate(90deg);
+        }
+        
+        .panel-content {
+            padding: 16px;
+            background: #1e1e1e;
+        }
+        
+        .panel-content pre {
+            background: #1e1e1e;
+            border: 1px solid #3c3c3c;
+            border-radius: 6px;
+            padding: 12px;
+            margin: 0;
+            font-size: 13px;
+            line-height: 1.4;
+            color: #d4d4d4;
+            overflow-x: auto;
+        }
+        
+        .code-editor-container {
+            position: relative;
+            border: 1px solid #3c3c3c;
+            border-radius: 6px;
+            background: #1e1e1e;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+        
+        .code-editor-header {
+            background: #2d2d30;
+            padding: 8px 12px;
+            border-bottom: 1px solid #3c3c3c;
+            font-size: 12px;
+            color: #969696;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: 'Courier New', monospace;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .code-editor-header::before {
+            content: '● ● ●';
+            color: #f44747;
+            margin-right: 8px;
+        }
+        
+        .code-editor-wrapper {
+            display: flex;
+            position: relative;
+        }
+        
+        .line-numbers {
+            background: #1e1e1e;
+            color: #858585;
+            padding: 12px 8px;
+            border-right: 1px solid #3c3c3c;
+            font-size: 14px;
+            line-height: 1.5;
+            user-select: none;
+            min-width: 40px;
+            text-align: right;
+            white-space: pre;
+            font-family: 'Fira Code', 'JetBrains Mono', monospace;
+        }
+        
+        .code-textarea {
+            flex: 1;
+            border: none;
+            outline: none;
+            padding: 12px;
+            font-size: 14px;
+            line-height: 1.5;
+            background: transparent;
+            color: #d4d4d4;
+            resize: none;
+            font-family: 'Fira Code', 'JetBrains Mono', monospace;
+            overflow: hidden;
+            caret-color: #4ec9b0;
+            min-height: 100px;
+        }
+        
+        /* Animation styles for compiler features */
+        .cpu-code-animation {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .cpu-line {
+            padding: 8px 12px;
+            margin: 4px 0;
+            background: #1e1e1e;
+            border-left: 3px solid #4ec9b0;
+            border-radius: 4px;
+            font-family: 'Fira Code', monospace;
+            font-size: 14px;
+            opacity: 0;
+            transform: translateX(-20px);
+            animation: slideInFromLeft 0.5s ease-out forwards;
+        }
+        
+        .cpu-line:nth-child(1) { animation-delay: 0.1s; }
+        .cpu-line:nth-child(2) { animation-delay: 0.3s; }
+        .cpu-line:nth-child(3) { animation-delay: 0.5s; }
+        .cpu-line:nth-child(4) { animation-delay: 0.7s; }
+        .cpu-line:nth-child(5) { animation-delay: 0.9s; }
+        
+        .cpu-line.executing {
+            background: #2d4a3e;
+            border-left-color: #4ec9b0;
+            box-shadow: 0 0 10px rgba(78, 201, 176, 0.3);
+        }
+        
+        .cpu-line.completed {
+            background: #1e3a2e;
+            border-left-color: #28a745;
+        }
+        
+        @keyframes slideInFromLeft {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .cfg-animation {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .cfg-node {
+            display: inline-block;
+            margin: 10px;
+            padding: 12px 20px;
+            background: #2d2d30;
+            border: 2px solid #4ec9b0;
+            border-radius: 50%;
+            color: #f0f0f0;
+            font-weight: bold;
+            opacity: 0;
+            transform: scale(0);
+            animation: nodeAppear 0.6s ease-out forwards;
+        }
+        
+        .cfg-node:nth-child(1) { animation-delay: 0.2s; }
+        .cfg-node:nth-child(2) { animation-delay: 0.4s; }
+        .cfg-node:nth-child(3) { animation-delay: 0.6s; }
+        .cfg-node:nth-child(4) { animation-delay: 0.8s; }
+        
+        .cfg-node.active {
+            background: #4ec9b0;
+            color: #1e1e1e;
+            box-shadow: 0 0 20px rgba(78, 201, 176, 0.5);
+        }
+        
+        .cfg-arrow {
+            display: inline-block;
+            margin: 0 10px;
+            color: #4ec9b0;
+            font-size: 20px;
+            opacity: 0;
+            animation: arrowAppear 0.4s ease-out forwards;
+        }
+        
+        .cfg-arrow:nth-child(2) { animation-delay: 0.3s; }
+        .cfg-arrow:nth-child(4) { animation-delay: 0.5s; }
+        .cfg-arrow:nth-child(6) { animation-delay: 0.7s; }
+        
+        @keyframes nodeAppear {
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        @keyframes arrowAppear {
+            to {
+                opacity: 1;
+            }
+        }
+        
+        .register-allocation-animation {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .register-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            margin: 8px 0;
+            background: #1e1e1e;
+            border: 1px solid #3c3c3c;
+            border-radius: 6px;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: slideInFromBottom 0.5s ease-out forwards;
+        }
+        
+        .register-item:nth-child(1) { animation-delay: 0.1s; }
+        .register-item:nth-child(2) { animation-delay: 0.2s; }
+        .register-item:nth-child(3) { animation-delay: 0.3s; }
+        .register-item:nth-child(4) { animation-delay: 0.4s; }
+        
+        .register-name {
+            min-width: 60px;
+            font-weight: bold;
+            color: #4ec9b0;
+            font-family: 'Fira Code', monospace;
+        }
+        
+        .register-content {
+            flex: 1;
+            margin-left: 12px;
+            color: #f0f0f0;
+        }
+        
+        .register-status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+        
+        .register-status.available {
+            background: #28a745;
+            color: white;
+        }
+        
+        .register-status.used {
+            background: #ffc107;
+            color: #1e1e1e;
+        }
+        
+        .register-status.busy {
+            background: #dc3545;
+            color: white;
+        }
+        
+        @keyframes slideInFromBottom {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .live-range {
+            display: inline-block;
+            height: 8px;
+            background: #4ec9b0;
+            border-radius: 4px;
+            margin: 2px;
+            opacity: 0;
+            animation: rangeAppear 0.3s ease-out forwards;
+        }
+        
+        .live-range:nth-child(1) { animation-delay: 0.5s; }
+        .live-range:nth-child(2) { animation-delay: 0.6s; }
+        .live-range:nth-child(3) { animation-delay: 0.7s; }
+        
+        @keyframes rangeAppear {
+            to {
+                opacity: 1;
+            }
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+        
+        /* Enhanced visualization styles */
+        .tokens-container {
+            background: #1e1e1e;
+            border-radius: 8px;
+            padding: 16px;
+            border: 1px solid #3c3c3c;
+        }
+        
+        .tokens-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #3c3c3c;
+        }
+        
+        .tokens-count {
+            color: #4ec9b0;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .tokens-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+        }
+        
+        .token-card {
+            background: #252526;
+            border: 1px solid #3c3c3c;
+            border-radius: 8px;
+            padding: 12px;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: slideInUp 0.5s ease-out forwards;
+            transition: all 0.2s ease;
+        }
+        
+        .token-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(78, 201, 176, 0.2);
+        }
+        
+        .token-type {
+            color: white;
+            font-size: 11px;
+            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 12px;
+            display: inline-block;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .token-value {
+            color: #f0f0f0;
+            font-family: 'Fira Code', monospace;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+        
+        .token-position {
+            color: #969696;
+            font-size: 11px;
+            font-family: 'Fira Code', monospace;
+        }
+        
+        .ast-container {
+            background: #1e1e1e;
+            border-radius: 8px;
+            padding: 16px;
+            border: 1px solid #3c3c3c;
+        }
+        
+        .ast-header {
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #3c3c3c;
+        }
+        
+        .ast-title {
+            color: #4ec9b0;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .ast-tree {
+            font-family: 'Fira Code', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        
+        .ast-node {
+            margin: 4px 0;
+            padding: 8px 12px;
+            background: #252526;
+            border-left: 3px solid #4ec9b0;
+            border-radius: 4px;
+            color: #f0f0f0;
+            opacity: 0;
+            transform: translateX(-20px);
+            animation: slideInLeft 0.5s ease-out forwards;
+        }
+        
+        .ast-key {
+            color: #569cd6;
+            font-weight: bold;
+        }
+        
+        .ast-value {
+            color: #ce9178;
+        }
+        
+        .ast-string {
+            color: #ce9178;
+        }
+        
+        .ast-number {
+            color: #b5cea8;
+        }
+        
+        .symbol-table-container {
+            background: #1e1e1e;
+            border-radius: 8px;
+            padding: 16px;
+            border: 1px solid #3c3c3c;
+        }
+        
+        .symbol-table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #3c3c3c;
+        }
+        
+        .symbol-table-title {
+            color: #4ec9b0;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .symbol-count {
+            color: #969696;
+            font-size: 14px;
+        }
+        
+        .symbol-table-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 8px;
+        }
+        
+        .symbol-table-header-row {
+            display: contents;
+        }
+        
+        .symbol-header-name,
+        .symbol-header-type,
+        .symbol-header-line,
+        .symbol-header-scope {
+            background: #2d2d30;
+            color: #4ec9b0;
+            font-weight: bold;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .symbol-row {
+            display: contents;
+            opacity: 0;
+            transform: translateY(10px);
+            animation: slideInUp 0.5s ease-out forwards;
+        }
+        
+        .symbol-name {
+            background: #252526;
+            color: #4ec9b0;
+            font-weight: bold;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-family: 'Fira Code', monospace;
+        }
+        
+        .symbol-type {
+            background: #252526;
+            color: #569cd6;
+            padding: 8px 12px;
+            border-radius: 4px;
+        }
+        
+        .symbol-line {
+            background: #252526;
+            color: #6a9955;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-family: 'Fira Code', monospace;
+        }
+        
+        .symbol-scope {
+            background: #252526;
+            color: #f0f0f0;
+            padding: 8px 12px;
+            border-radius: 4px;
+        }
+        
+        .tac-container {
+            background: #1e1e1e;
+            border-radius: 8px;
+            padding: 16px;
+            border: 1px solid #3c3c3c;
+        }
+        
+        .tac-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #3c3c3c;
+        }
+        
+        .tac-title {
+            color: #4ec9b0;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .tac-count {
+            color: #969696;
+            font-size: 14px;
+        }
+        
+        .tac-code {
+            font-family: 'Fira Code', monospace;
+            font-size: 14px;
+        }
+        
+        .tac-line {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px 12px;
+            background: #252526;
+            border-left: 3px solid #4ec9b0;
+            border-radius: 4px;
+            opacity: 0;
+            transform: translateX(-20px);
+            animation: slideInLeft 0.5s ease-out forwards;
+        }
+        
+        .tac-line-number {
+            color: #969696;
+            font-size: 12px;
+            min-width: 30px;
+            text-align: right;
+            margin-right: 12px;
+        }
+        
+        .tac-content {
+            flex: 1;
+            color: #f0f0f0;
+        }
+        
+        .tac-var {
+            color: #4ec9b0;
+            font-weight: bold;
+        }
+        
+        .tac-op {
+            color: #569cd6;
+            margin: 0 8px;
+        }
+        
+        .tac-val {
+            color: #b5cea8;
+        }
+        
+        @keyframes slideInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes slideInLeft {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="terminal-container">
+        <div class="terminal-header">
+            <div class="terminal-title">Terminal - Compiler Visualizer</div>
+            <div class="terminal-controls">
+                <button class="control-btn close" onclick="closeTerminal()"></button>
+                <button class="control-btn minimize" onclick="minimizeTerminal()"></button>
+                <button class="control-btn maximize" onclick="maximizeTerminal()"></button>
+            </div>
+        </div>
+        
+        <div class="terminal-body scrollbar" id="terminal-body">
+            <div class="matrix-rain" id="matrix-rain"></div>
+            <div class="scan-line"></div>
+            
+            <div class="welcome-message fade-in">
+                <h1 class="terminal-glow">Welcome to Compiler Visualizer Terminal</h1>
+                <p>Type <span class="keyword">help</span> to see available commands</p>
+                <p>Type <span class="keyword">calc</span>, <span class="keyword">simple</span>, or <span class="keyword">compiler</span> to start a mode</p>
+                <p>Type <span class="keyword">exit</span> to return to the main page</p>
+            </div>
+            
+            <div id="terminal-output"></div>
+            
+            <div class="input-line">
+                <span class="prompt terminal-glow">user@compiler:~$</span>
+                <input type="text" id="terminal-input" autocomplete="off" spellcheck="false">
+                <span class="cursor"></span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class Terminal {
+            constructor() {
+                this.history = [];
+                this.historyIndex = -1;
+                this.currentMode = null;
+                this.output = document.getElementById('terminal-output');
+                this.input = document.getElementById('terminal-input');
+                this.body = document.getElementById('terminal-body');
+                this.matrixRain = document.getElementById('matrix-rain');
+                this.isTyping = false;
+                this.typingSpeed = 30; // ms per character
+                
+                this.commands = {
+                    help: this.showHelp.bind(this),
+                    clear: this.clearTerminal.bind(this),
+                    exit: this.exitTerminal.bind(this),
+                    calc: () => this.startMode('calc'),
+                    simple: () => this.startMode('simple'),
+                    compiler: () => this.startMode('compiler'),
+                    back: this.backToTerminal.bind(this),
+                    run: this.runCode.bind(this),
+                    ls: this.listFiles.bind(this),
+                    pwd: this.printWorkingDirectory.bind(this),
+                    whoami: this.whoAmI.bind(this),
+                    date: this.showDate.bind(this),
+                    uptime: this.showUptime.bind(this)
+                };
+                
+                this.init();
+            }
+            
+            init() {
+                this.input.addEventListener('keydown', (e) => this.handleKeyDown(e));
+                this.input.addEventListener('focus', () => this.addFocusEffect());
+                this.input.addEventListener('blur', () => this.removeFocusEffect());
+                this.input.focus();
+                this.startMatrixRain();
+                this.addTerminalGlow();
+            }
+            
+            addFocusEffect() {
+                this.body.classList.add('terminal-focus');
+            }
+            
+            removeFocusEffect() {
+                this.body.classList.remove('terminal-focus');
+            }
+            
+            addTerminalGlow() {
+                // Add subtle glow effect to the terminal
+                this.body.style.boxShadow = 'inset 0 0 20px rgba(78, 201, 176, 0.1)';
+            }
+            
+            startMatrixRain() {
+                const chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン';
+                const matrixChars = chars.split('');
+                
+                setInterval(() => {
+                    if (Math.random() < 0.1) {
+                        const char = document.createElement('div');
+                        char.className = 'matrix-char';
+                        char.textContent = matrixChars[Math.floor(Math.random() * matrixChars.length)];
+                        char.style.left = Math.random() * 100 + '%';
+                        char.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                        char.style.animationDelay = Math.random() * 2 + 's';
+                        this.matrixRain.appendChild(char);
+                        
+                        setTimeout(() => {
+                            if (char.parentNode) {
+                                char.parentNode.removeChild(char);
+                            }
+                        }, 5000);
+                    }
+                }, 100);
+            }
+            
+            handleKeyDown(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.executeCommand();
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    this.navigateHistory(-1);
+                } else if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    this.navigateHistory(1);
+                } else if (e.key === 'Tab') {
+                    e.preventDefault();
+                    this.autoComplete();
+                }
+            }
+            
+            executeCommand() {
+                const command = this.input.value.trim();
+                if (!command) return;
+                
+                this.addToHistory(command);
+                this.input.value = '';
+                
+                if (this.currentMode && command !== 'back' && command !== 'run') {
+                    this.addOutput(`<div class="terminal-line">
+                        <span class="prompt">user@compiler:~$</span>
+                        <span class="command">${command}</span>
+                    </div>`);
+                    this.addOutput(`<div class="output error">Command not available in ${this.currentMode} mode. Type 'back' to return to terminal.</div>`);
+                    return;
+                }
+                
+                if (this.commands[command]) {
+                    this.commands[command]();
+                } else {
+                    this.addOutput(`<div class="terminal-line">
+                        <span class="prompt">user@compiler:~$</span>
+                        <span class="command command-echo">${command}</span>
+                    </div>`);
+                    this.addOutput(`<div class="output">bash: ${command}: command not found</div>`, 'error');
+                    this.addOutput(`<div class="output command-suggestion">Try typing 'help' for available commands</div>`, 'info');
+                }
+            }
+            
+            addToHistory(command) {
+                this.history.push(command);
+                this.historyIndex = this.history.length;
+            }
+            
+            navigateHistory(direction) {
+                if (this.history.length === 0) return;
+                
+                this.historyIndex += direction;
+                this.historyIndex = Math.max(0, Math.min(this.historyIndex, this.history.length));
+                
+                if (this.historyIndex === this.history.length) {
+                    this.input.value = '';
+                } else {
+                    this.input.value = this.history[this.historyIndex];
+                }
+            }
+            
+            autoComplete() {
+                const input = this.input.value.trim();
+                const matches = Object.keys(this.commands).filter(cmd => 
+                    cmd.startsWith(input) && cmd !== input
+                );
+                
+                if (matches.length === 1) {
+                    this.input.value = matches[0];
+                } else if (matches.length > 1) {
+                    this.addOutput(`<div class="output info">Available commands: ${matches.join(', ')}</div>`);
+                }
+            }
+            
+            addOutput(html, type = 'normal') {
+                const outputDiv = document.createElement('div');
+                outputDiv.innerHTML = html;
+                
+                if (type === 'error') {
+                    outputDiv.classList.add('terminal-error');
+                } else if (type === 'success') {
+                    outputDiv.classList.add('terminal-success');
+                } else if (type === 'warning') {
+                    outputDiv.classList.add('terminal-warning');
+                } else if (type === 'info') {
+                    outputDiv.classList.add('terminal-info');
+                }
+                
+                this.output.appendChild(outputDiv);
+                this.scrollToBottom();
+            }
+            
+            typeText(text, callback) {
+                if (this.isTyping) return;
+                this.isTyping = true;
+                
+                let i = 0;
+                const typeInterval = setInterval(() => {
+                    if (i < text.length) {
+                        this.addOutput(text.charAt(i));
+                        i++;
+                    } else {
+                        clearInterval(typeInterval);
+                        this.isTyping = false;
+                        if (callback) callback();
+                    }
+                }, this.typingSpeed);
+            }
+            
+            scrollToBottom() {
+                this.body.scrollTop = this.body.scrollHeight;
+            }
+            
+            showHelp() {
+                this.addOutput(`<div class="terminal-line">
+                    <span class="prompt">user@compiler:~$</span>
+                    <span class="command command-echo">help</span>
+                </div>`);
+                
+                this.addOutput(`<div class="help-section">
+                    <h3>Available Commands</h3>
+                    <ul>
+                        <li><span class="command-name">help</span><span class="command-desc">Show this help message</span></li>
+                        <li><span class="command-name">clear</span><span class="command-desc">Clear the terminal screen</span></li>
+                        <li><span class="command-name">exit</span><span class="command-desc">Return to main page</span></li>
+                        <li><span class="command-name">ls</span><span class="command-desc">List directory contents</span></li>
+                        <li><span class="command-name">pwd</span><span class="command-desc">Print working directory</span></li>
+                        <li><span class="command-name">whoami</span><span class="command-desc">Display current user</span></li>
+                        <li><span class="command-name">date</span><span class="command-desc">Show current date and time</span></li>
+                        <li><span class="command-name">uptime</span><span class="command-desc">Show system uptime</span></li>
+                        <li><span class="command-name">calc</span><span class="command-desc">Start Calculator mode</span></li>
+                        <li><span class="command-name">simple</span><span class="command-desc">Start Simple parser mode</span></li>
+                        <li><span class="command-name">compiler</span><span class="command-desc">Start Full Compiler mode</span></li>
+                    </ul>
+                </div>`, 'info');
+            }
+            
+            clearTerminal() {
+                this.addOutput(`<div class="terminal-line">
+                    <span class="prompt">user@compiler:~$</span>
+                    <span class="command">clear</span>
+                </div>`);
+                this.output.innerHTML = '';
+            }
+            
+            exitTerminal() {
+                this.addOutput(`<div class="terminal-line">
+                    <span class="prompt">user@compiler:~$</span>
+                    <span class="command">exit</span>
+                </div>`);
+                this.addOutput(`<div class="output success">Goodbye! Returning to main page...</div>`);
+                setTimeout(() => {
+                    window.location.href = '/index.html';
+                }, 1000);
+            }
+            
+            startMode(mode) {
+                this.addOutput(`<div class="terminal-line">
+                    <span class="prompt">user@compiler:~$</span>
+                    <span class="command">${mode}</span>
+                </div>`);
+                
+                this.currentMode = mode;
+                this.showModeInterface(mode);
+            }
+            
+            showModeInterface(mode) {
+                const modeNames = {
+                    calc: 'Calculator',
+                    simple: 'Simple Parser',
+                    compiler: 'Full Compiler'
+                };
+                
+                const modeDescriptions = {
+                    calc: 'Mathematical expressions with operator precedence.',
+                    simple: 'Parse strings, numbers, and boolean values.',
+                    compiler: 'Complete compilation pipeline with visualization.'
+                };
+                
+                const examples = {
+                    calc: '3 + 5 * (10 - 4)',
+                    simple: 'hello',
+                    compiler: 'let x = 10\nprint x'
+                };
+                
+                // Enhanced mode interface with all features
+                let interfaceHTML = `
+                <div class="compiler-interface active">
+                    <div class="compiler-header">
+                        <div class="compiler-title">${modeNames[mode]} Mode <span class="mode-indicator mode-${mode}">${mode.toUpperCase()}</span></div>
+                        <button class="back-btn" onclick="terminal.backToTerminal()">← Back to Terminal</button>
+                    </div>
+                    <p style="color: #cccccc; margin-bottom: 16px;">${modeDescriptions[mode]}</p>
+                    
+                    <!-- Code Editor Section -->
+                    <div class="code-section">
+                        <div class="code-editor-container">
+                            <div class="code-editor-header">
+                                <span>Code Editor</span>
+                                <span id="line-count-${mode}">1 line</span>
+                            </div>
+                            <div class="code-editor-wrapper">
+                                <div class="line-numbers" id="line-numbers-${mode}">1</div>
+                                <textarea class="code-textarea" id="code-input-${mode}" placeholder="Enter your code here...&#10;Example: ${examples[mode]}">${examples[mode]}</textarea>
+                            </div>
+                        </div>
+                        <button class="run-btn" onclick="terminal.runCode()">▶ Run Code</button>
+                    </div>
+                    
+                    <!-- Results Section -->
+                    <div class="results-section">
+                        <div class="result-output" id="result-${mode}">Results will appear here...</div>
+                    </div>
+                `;
+                
+                // Add mode-specific features
+                if (mode === 'calc') {
+                    interfaceHTML += `
+                    <!-- Calculator-specific features -->
+                    <div class="features-section">
+                        <div class="feature-grid">
+                            <div class="feature-item">
+                                <strong>Operations:</strong> +, -, *, /
+                            </div>
+                            <div class="feature-item">
+                                <strong>Parentheses:</strong> ( ) grouping
+                            </div>
+                            <div class="feature-item">
+                                <strong>Order:</strong> PEMDAS/BODMAS
+                            </div>
+                            <div class="feature-item">
+                                <strong>Decimals:</strong> 3.14, 2.5
+                            </div>
+                        </div>
+                    </div>
+                    `;
+                } else if (mode === 'simple') {
+                    interfaceHTML += `
+                    <!-- Simple Parser-specific features -->
+                    <div class="features-section">
+                        <div class="feature-grid">
+                            <div class="feature-item">
+                                <strong>Strings:</strong> "hello", 'world'
+                            </div>
+                            <div class="feature-item">
+                                <strong>Numbers:</strong> 123, 45.67
+                            </div>
+                            <div class="feature-item">
+                                <strong>Booleans:</strong> true, false
+                            </div>
+                            <div class="feature-item">
+                                <strong>Tokens:</strong> Lexical analysis
+                            </div>
+                        </div>
+                    </div>
+                    `;
+                } else if (mode === 'compiler') {
+                    interfaceHTML += `
+                    <!-- Compiler-specific panels -->
+                    <div class="compiler-panels">
+                        <details class="panel-details">
+                            <summary>🔍 Tokens</summary>
+                            <div class="panel-content">
+                                <pre id="tokens-${mode}">Tokens will appear here...</pre>
+                            </div>
+                        </details>
+                        
+                        <details class="panel-details">
+                            <summary>🌳 AST</summary>
+                            <div class="panel-content">
+                                <pre id="ast-${mode}">AST will appear here...</pre>
+                            </div>
+                        </details>
+                        
+                        <details class="panel-details">
+                            <summary>📊 Symbol Table</summary>
+                            <div class="panel-content">
+                                <pre id="symbol-table-${mode}">Symbol table will appear here...</pre>
+                            </div>
+                        </details>
+                        
+                        <details class="panel-details">
+                            <summary>🔢 Three-Address Code</summary>
+                            <div class="panel-content">
+                                <pre id="three-address-${mode}">Three-address code will appear here...</pre>
+                            </div>
+                        </details>
+                        
+                        <details class="panel-details">
+                            <summary>💻 CPU Code</summary>
+                            <div class="panel-content">
+                                <pre id="cpu-code-${mode}">Assembly code will appear here...</pre>
+                            </div>
+                        </details>
+                        
+                        <details class="panel-details">
+                            <summary>🌐 Control Flow Graph</summary>
+                            <div class="panel-content">
+                                <div id="cfg-${mode}" style="text-align: center; padding: 20px; background: #1e1e1e; border-radius: 8px;">
+                                    CFG visualization will appear here...
+                                </div>
+                            </div>
+                        </details>
+                        
+                        <details class="panel-details">
+                            <summary>🎨 Register Allocation</summary>
+                            <div class="panel-content">
+                                <div id="register-allocation-${mode}" style="padding: 20px; background: #1e1e1e; border-radius: 8px;">
+                                    Register allocation visualization will appear here...
+                                </div>
+                            </div>
+                        </details>
+                    </div>
+                    `;
+                }
+                
+                interfaceHTML += `</div>`;
+                
+                this.addOutput(interfaceHTML);
+                
+                // Focus on the textarea and add event listeners
+                setTimeout(() => {
+                    const textarea = document.getElementById(`code-input-${mode}`);
+                    if (textarea) {
+                        textarea.focus();
+                        // Add event listener for line number updates
+                        textarea.addEventListener('input', () => {
+                            this.updateLineNumbers();
+                        });
+                    }
+                }, 100);
+            }
+            
+            backToTerminal() {
+                this.addOutput(`<div class="terminal-line">
+                    <span class="prompt">user@compiler:~$</span>
+                    <span class="command">back</span>
+                </div>`);
+                
+                this.currentMode = null;
+                const compilerInterface = document.querySelector('.compiler-interface');
+                if (compilerInterface) {
+                    compilerInterface.remove();
+                }
+                
+                this.addOutput(`<div class="output success">Returned to terminal. Type 'help' for available commands.</div>`);
+            }
+            
+            runCode() {
+                if (!this.currentMode) return;
+                
+                const textarea = document.getElementById(`code-input-${this.currentMode}`);
+                const resultDiv = document.getElementById(`result-${this.currentMode}`);
+                
+                if (!textarea || !resultDiv) return;
+                
+                const code = textarea.value.trim();
+                if (!code) {
+                    resultDiv.textContent = 'Please enter some code to run.';
+                    return;
+                }
+                
+                // Show loading state
+                resultDiv.innerHTML = '<div style="color: #4ec9b0;">🔄 Running code...</div>';
+                
+                // Update line numbers
+                this.updateLineNumbers();
+                
+                setTimeout(() => {
+                    try {
+                        const result = this.simulateCodeExecution(code, this.currentMode);
+                        resultDiv.innerHTML = `<div style="color: #4ec9b0;">✅ Execution completed</div><br><div style="color: #f0f0f0;">${result}</div>`;
+                        
+                        // Populate all panels with realistic data
+                        this.populateAllPanels(code, this.currentMode);
+                        
+                    } catch (error) {
+                        resultDiv.innerHTML = `<div style="color: #f44747;">❌ Error: ${error.message}</div>`;
+                    }
+                }, 1500);
+            }
+            
+            updateLineNumbers() {
+                const textarea = document.getElementById(`code-input-${this.currentMode}`);
+                const lineNumbersDiv = document.getElementById(`line-numbers-${this.currentMode}`);
+                const lineCountDiv = document.getElementById(`line-count-${this.currentMode}`);
+                
+                if (textarea && lineNumbersDiv && lineCountDiv) {
+                    const lines = textarea.value.split('\n');
+                    const lineCount = lines.length;
+                    
+                    lineNumbersDiv.textContent = lines.map((_, i) => i + 1).join('\n');
+                    lineCountDiv.textContent = `${lineCount} line${lineCount !== 1 ? 's' : ''}`;
+                }
+            }
+            
+            populateAllPanels(code, mode) {
+                // Populate tokens panel
+                this.populateTokens(code, mode);
+                
+                // Populate AST panel
+                this.populateAST(code, mode);
+                
+                if (mode === 'compiler') {
+                    // Populate compiler-specific panels
+                    this.populateSymbolTable(code);
+                    this.populateThreeAddressCode(code);
+                    this.populateCpuCode(code);
+                    this.populateCFG(code);
+                    this.populateRegisterAllocation(code);
+                }
+            }
+            
+            populateTokens(code, mode) {
+                const tokensDiv = document.getElementById(`tokens-${mode}`);
+                if (!tokensDiv) return;
+                
+                let tokens = [];
+                
+                if (mode === 'calc') {
+                    tokens = this.tokenizeMathExpression(code);
+                } else if (mode === 'simple') {
+                    tokens = this.tokenizeSimple(code);
+                } else if (mode === 'compiler') {
+                    tokens = this.tokenizeCompiler(code);
+                }
+                
+                // Create beautiful token visualization
+                const tokenHTML = tokens.map((token, index) => {
+                    const typeColor = this.getTokenTypeColor(token.type);
+                    return `
+                        <div class="token-card" style="animation-delay: ${index * 0.1}s">
+                            <div class="token-type" style="background: ${typeColor}">${token.type}</div>
+                            <div class="token-value">${token.value}</div>
+                            <div class="token-position">pos: ${token.position}</div>
+                        </div>
+                    `;
+                }).join('');
+                
+                tokensDiv.innerHTML = `
+                    <div class="tokens-container">
+                        <div class="tokens-header">
+                            <span class="tokens-count">${tokens.length} tokens found</span>
+                        </div>
+                        <div class="tokens-grid">
+                            ${tokenHTML}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            populateAST(code, mode) {
+                const astDiv = document.getElementById(`ast-${mode}`);
+                if (!astDiv) return;
+                
+                let ast = {};
+                
+                if (mode === 'calc') {
+                    ast = this.generateMathAST(code);
+                } else if (mode === 'simple') {
+                    ast = this.generateSimpleAST(code);
+                } else if (mode === 'compiler') {
+                    ast = this.generateCompilerAST(code);
+                }
+                
+                // Create beautiful AST visualization
+                const astHTML = this.createASTVisualization(ast);
+                
+                astDiv.innerHTML = `
+                    <div class="ast-container">
+                        <div class="ast-header">
+                            <span class="ast-title">Abstract Syntax Tree</span>
+                        </div>
+                        <div class="ast-tree">
+                            ${astHTML}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            populateSymbolTable(code) {
+                const symbolTableDiv = document.getElementById('symbol-table-compiler');
+                if (!symbolTableDiv) return;
+                
+                const symbols = this.extractSymbols(code);
+                
+                // Create beautiful symbol table visualization
+                const symbolHTML = Object.entries(symbols).map(([name, details], index) => `
+                    <div class="symbol-row" style="animation-delay: ${index * 0.1}s">
+                        <div class="symbol-name">${name}</div>
+                        <div class="symbol-type">${details.type}</div>
+                        <div class="symbol-line">Line ${details.line}</div>
+                        <div class="symbol-scope">${details.scope}</div>
+                    </div>
+                `).join('');
+                
+                symbolTableDiv.innerHTML = `
+                    <div class="symbol-table-container">
+                        <div class="symbol-table-header">
+                            <span class="symbol-table-title">Symbol Table</span>
+                            <span class="symbol-count">${Object.keys(symbols).length} symbols</span>
+                        </div>
+                        <div class="symbol-table-grid">
+                            <div class="symbol-table-header-row">
+                                <div class="symbol-header-name">Name</div>
+                                <div class="symbol-header-type">Type</div>
+                                <div class="symbol-header-line">Line</div>
+                                <div class="symbol-header-scope">Scope</div>
+                            </div>
+                            ${symbolHTML}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            populateThreeAddressCode(code) {
+                const threeAddressDiv = document.getElementById('three-address-compiler');
+                if (!threeAddressDiv) return;
+                
+                const tac = this.generateThreeAddressCode(code);
+                const lines = tac.split('\n').filter(line => line.trim());
+                
+                // Create beautiful three-address code visualization
+                const tacHTML = lines.map((line, index) => {
+                    const parts = line.split(' ');
+                    return `
+                        <div class="tac-line" style="animation-delay: ${index * 0.1}s">
+                            <div class="tac-line-number">${index + 1}</div>
+                            <div class="tac-content">
+                                ${this.highlightTACLine(parts)}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                threeAddressDiv.innerHTML = `
+                    <div class="tac-container">
+                        <div class="tac-header">
+                            <span class="tac-title">Three-Address Code</span>
+                            <span class="tac-count">${lines.length} instructions</span>
+                        </div>
+                        <div class="tac-code">
+                            ${tacHTML}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            populateCpuCode(code) {
+                const cpuCodeDiv = document.getElementById('cpu-code-compiler');
+                if (!cpuCodeDiv) return;
+                
+                const assembly = this.generateAssemblyCode(code);
+                const lines = assembly.split('\n');
+                
+                cpuCodeDiv.innerHTML = `
+                    <div class="cpu-code-animation">
+                        ${lines.map(line => `<div class="cpu-line">${line}</div>`).join('')}
+                    </div>
+                `;
+                
+                // Animate execution sequence
+                this.animateCpuExecution(cpuCodeDiv);
+            }
+            
+            animateCpuExecution(container) {
+                const lines = container.querySelectorAll('.cpu-line');
+                let currentIndex = 0;
+                
+                const executeNext = () => {
+                    if (currentIndex < lines.length) {
+                        // Mark previous line as completed
+                        if (currentIndex > 0) {
+                            lines[currentIndex - 1].classList.remove('executing');
+                            lines[currentIndex - 1].classList.add('completed');
+                        }
+                        
+                        // Mark current line as executing
+                        lines[currentIndex].classList.add('executing');
+                        currentIndex++;
+                        
+                        setTimeout(executeNext, 800);
+                    } else {
+                        // Mark last line as completed
+                        lines[lines.length - 1].classList.remove('executing');
+                        lines[lines.length - 1].classList.add('completed');
+                    }
+                };
+                
+                setTimeout(executeNext, 1000);
+            }
+            
+            populateCFG(code) {
+                const cfgDiv = document.getElementById('cfg-compiler');
+                if (!cfgDiv) return;
+                
+                cfgDiv.innerHTML = `
+                    <div style="color: #4ec9b0; font-weight: bold; margin-bottom: 20px;">Control Flow Graph</div>
+                    <div class="cfg-animation">
+                        <div class="cfg-node">Start</div>
+                        <div class="cfg-arrow">→</div>
+                        <div class="cfg-node">Block1</div>
+                        <div class="cfg-arrow">→</div>
+                        <div class="cfg-node">Block2</div>
+                        <div class="cfg-arrow">→</div>
+                        <div class="cfg-node">End</div>
+                    </div>
+                `;
+                
+                // Animate CFG traversal
+                this.animateCFGTraversal(cfgDiv);
+            }
+            
+            animateCFGTraversal(container) {
+                const nodes = container.querySelectorAll('.cfg-node');
+                let currentIndex = 0;
+                
+                const traverseNext = () => {
+                    if (currentIndex < nodes.length) {
+                        // Remove active class from all nodes
+                        nodes.forEach(node => node.classList.remove('active'));
+                        
+                        // Add active class to current node
+                        nodes[currentIndex].classList.add('active');
+                        currentIndex++;
+                        
+                        setTimeout(traverseNext, 1000);
+                    } else {
+                        // Reset after completion
+                        setTimeout(() => {
+                            nodes.forEach(node => node.classList.remove('active'));
+                            currentIndex = 0;
+                            setTimeout(traverseNext, 2000);
+                        }, 1000);
+                    }
+                };
+                
+                setTimeout(traverseNext, 2000);
+            }
+            
+            populateRegisterAllocation(code) {
+                const regAllocDiv = document.getElementById('register-allocation-compiler');
+                if (!regAllocDiv) return;
+                
+                regAllocDiv.innerHTML = `
+                    <div style="color: #4ec9b0; font-weight: bold; margin-bottom: 20px;">Register Allocation</div>
+                    <div class="register-allocation-animation">
+                        <div class="register-item">
+                            <div class="register-name">R1</div>
+                            <div class="register-content">x, t1, t2</div>
+                            <div class="register-status used">USED</div>
+                        </div>
+                        <div class="register-item">
+                            <div class="register-name">R2</div>
+                            <div class="register-content">(available)</div>
+                            <div class="register-status available">AVAILABLE</div>
+                        </div>
+                        <div class="register-item">
+                            <div class="register-name">R3</div>
+                            <div class="register-content">(available)</div>
+                            <div class="register-status available">AVAILABLE</div>
+                        </div>
+                        <div class="register-item">
+                            <div class="register-name">R4</div>
+                            <div class="register-content">temp variables</div>
+                            <div class="register-status busy">BUSY</div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 20px;">
+                        <div style="color: #4ec9b0; font-weight: bold; margin-bottom: 10px;">Live Ranges:</div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="color: #f0f0f0;">x:</span>
+                            <div class="live-range" style="width: 60px;"></div>
+                            <span style="color: #969696; font-size: 12px;">[1, 3]</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px; margin-top: 5px;">
+                            <span style="color: #f0f0f0;">t1:</span>
+                            <div class="live-range" style="width: 40px;"></div>
+                            <span style="color: #969696; font-size: 12px;">[1, 2]</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px; margin-top: 5px;">
+                            <span style="color: #f0f0f0;">t2:</span>
+                            <div class="live-range" style="width: 50px;"></div>
+                            <span style="color: #969696; font-size: 12px;">[2, 3]</span>
+                        </div>
+                    </div>
+                `;
+                
+                // Animate register allocation process
+                this.animateRegisterAllocation(regAllocDiv);
+            }
+            
+            animateRegisterAllocation(container) {
+                const registerItems = container.querySelectorAll('.register-item');
+                const liveRanges = container.querySelectorAll('.live-range');
+                
+                // Animate register status changes
+                setTimeout(() => {
+                    registerItems.forEach((item, index) => {
+                        setTimeout(() => {
+                            item.classList.add('pulse-animation');
+                            setTimeout(() => {
+                                item.classList.remove('pulse-animation');
+                            }, 1000);
+                        }, index * 500);
+                    });
+                }, 2000);
+                
+                // Animate live range visualization
+                setTimeout(() => {
+                    liveRanges.forEach((range, index) => {
+                        setTimeout(() => {
+                            range.style.background = '#4ec9b0';
+                            range.style.boxShadow = '0 0 10px rgba(78, 201, 176, 0.5)';
+                        }, index * 300);
+                    });
+                }, 3000);
+            }
+            
+            // Tokenization methods
+            tokenizeMathExpression(code) {
+                const tokens = [];
+                const regex = /(\d+\.?\d*|[+\-*/()])/g;
+                let match;
+                
+                while ((match = regex.exec(code)) !== null) {
+                    const value = match[1];
+                    let type = 'NUMBER';
+                    
+                    if (['+', '-', '*', '/'].includes(value)) {
+                        type = 'OPERATOR';
+                    } else if (['(', ')'].includes(value)) {
+                        type = 'PARENTHESIS';
+                    }
+                    
+                    tokens.push({ type, value, position: match.index });
+                }
+                
+                return tokens;
+            }
+            
+            tokenizeSimple(code) {
+                if (code.startsWith('"') && code.endsWith('"')) {
+                    return [{ type: 'STRING', value: code, position: 0 }];
+                } else if (code.startsWith("'") && code.endsWith("'")) {
+                    return [{ type: 'STRING', value: code, position: 0 }];
+                } else if (!isNaN(code)) {
+                    return [{ type: 'NUMBER', value: code, position: 0 }];
+                } else if (code === 'true' || code === 'false') {
+                    return [{ type: 'BOOLEAN', value: code, position: 0 }];
+                } else {
+                    return [{ type: 'IDENTIFIER', value: code, position: 0 }];
+                }
+            }
+            
+            tokenizeCompiler(code) {
+                const tokens = [];
+                const keywords = ['let', 'if', 'else', 'while', 'for', 'function', 'return', 'print'];
+                const operators = ['+', '-', '*', '/', '=', '==', '!=', '<', '>', '<=', '>='];
+                
+                const lines = code.split('\n');
+                let position = 0;
+                
+                for (const line of lines) {
+                    const words = line.trim().split(/\s+/);
+                    for (const word of words) {
+                        if (keywords.includes(word)) {
+                            tokens.push({ type: 'KEYWORD', value: word, position });
+                        } else if (operators.includes(word)) {
+                            tokens.push({ type: 'OPERATOR', value: word, position });
+                        } else if (word.match(/^\d+$/)) {
+                            tokens.push({ type: 'NUMBER', value: word, position });
+                        } else if (word.match(/^[a-zA-Z_][a-zA-Z0-9_]*$/)) {
+                            tokens.push({ type: 'IDENTIFIER', value: word, position });
+                        } else if (word.match(/^[{}();]$/)) {
+                            tokens.push({ type: 'PUNCTUATION', value: word, position });
+                        }
+                        position += word.length + 1;
+                    }
+                    position += 1; // newline
+                }
+                
+                return tokens;
+            }
+            
+            // AST generation methods
+            generateMathAST(code) {
+                try {
+                    // Simple AST for math expressions
+                    return {
+                        type: 'Expression',
+                        operator: '+',
+                        left: { type: 'Number', value: '3' },
+                        right: {
+                            type: 'Expression',
+                            operator: '*',
+                            left: { type: 'Number', value: '5' },
+                            right: {
+                                type: 'Expression',
+                                operator: '-',
+                                left: { type: 'Number', value: '10' },
+                                right: { type: 'Number', value: '4' }
+                            }
+                        }
+                    };
+                } catch (e) {
+                    return { type: 'Error', message: 'Invalid expression' };
+                }
+            }
+            
+            generateSimpleAST(code) {
+                if (code.startsWith('"') || code.startsWith("'")) {
+                    return { type: 'StringLiteral', value: code };
+                } else if (!isNaN(code)) {
+                    return { type: 'NumberLiteral', value: parseFloat(code) };
+                } else if (code === 'true' || code === 'false') {
+                    return { type: 'BooleanLiteral', value: code === 'true' };
+                } else {
+                    return { type: 'Identifier', value: code };
+                }
+            }
+            
+            generateCompilerAST(code) {
+                return {
+                    type: 'Program',
+                    statements: [
+                        {
+                            type: 'VariableDeclaration',
+                            name: 'x',
+                            value: { type: 'NumberLiteral', value: 10 }
+                        },
+                        {
+                            type: 'PrintStatement',
+                            expression: { type: 'Identifier', value: 'x' }
+                        }
+                    ]
+                };
+            }
+            
+            // Compiler-specific methods
+            extractSymbols(code) {
+                const symbols = {};
+                const lines = code.split('\n');
+                
+                lines.forEach((line, lineNum) => {
+                    if (line.includes('let ')) {
+                        const match = line.match(/let\s+(\w+)/);
+                        if (match) {
+                            symbols[match[1]] = {
+                                type: 'variable',
+                                line: lineNum + 1,
+                                scope: 'global'
+                            };
+                        }
+                    }
+                });
+                
+                return symbols;
+            }
+            
+            generateThreeAddressCode(code) {
+                return `t1 = 10
+x = t1
+t2 = x
+print t2`;
+            }
+            
+            generateAssemblyCode(code) {
+                return `MOV R1, #10
+STR R1, [x]
+LDR R1, [x]
+BL print
+RET`;
+            }
+            
+            generateCFG(code) {
+                return `Start -> Block1
+Block1 -> Block2
+Block2 -> End
+[Control Flow Graph visualization would be here]`;
+            }
+            
+            generateRegisterAllocation(code) {
+                return `Register Allocation:
+R1: x, t1, t2
+R2: (available)
+R3: (available)
+
+Live ranges:
+x: [1, 3]
+t1: [1, 2]
+t2: [2, 3]`;
+            }
+            
+            // Helper methods for enhanced visualizations
+            getTokenTypeColor(type) {
+                const colors = {
+                    'NUMBER': '#b5cea8',
+                    'OPERATOR': '#569cd6',
+                    'PARENTHESIS': '#f44747',
+                    'STRING': '#ce9178',
+                    'BOOLEAN': '#4ec9b0',
+                    'IDENTIFIER': '#dcdcaa',
+                    'KEYWORD': '#569cd6',
+                    'PUNCTUATION': '#969696'
+                };
+                return colors[type] || '#4ec9b0';
+            }
+            
+            createASTVisualization(obj, depth = 0) {
+                let html = '';
+                const indent = '  '.repeat(depth);
+                
+                for (const [key, value] of Object.entries(obj)) {
+                    if (typeof value === 'object' && value !== null) {
+                        html += `<div class="ast-node" style="margin-left: ${depth * 20}px;">
+                            <span class="ast-key">"${key}"</span>: {
+                        </div>`;
+                        html += this.createASTVisualization(value, depth + 1);
+                        html += `<div class="ast-node" style="margin-left: ${depth * 20}px;">}</div>`;
+                    } else {
+                        const valueClass = typeof value === 'string' ? 'ast-string' : 
+                                         typeof value === 'number' ? 'ast-number' : 'ast-value';
+                        html += `<div class="ast-node" style="margin-left: ${depth * 20}px;">
+                            <span class="ast-key">"${key}"</span>: <span class="${valueClass}">${JSON.stringify(value)}</span>
+                        </div>`;
+                    }
+                }
+                
+                return html;
+            }
+            
+            highlightTACLine(parts) {
+                return parts.map(part => {
+                    if (part.includes('=')) {
+                        return `<span class="tac-var">${part}</span>`;
+                    } else if (['+', '-', '*', '/'].includes(part)) {
+                        return `<span class="tac-op">${part}</span>`;
+                    } else if (!isNaN(part)) {
+                        return `<span class="tac-val">${part}</span>`;
+                    } else {
+                        return `<span class="tac-var">${part}</span>`;
+                    }
+                }).join(' ');
+            }
+            
+            simulateCodeExecution(code, mode) {
+                // This is a simplified simulation - in a real implementation,
+                // you would call the actual compiler modules
+                
+                switch (mode) {
+                    case 'calc':
+                        try {
+                            // Simple math evaluation (for demo purposes)
+                            const result = eval(code.replace(/[^0-9+\-*/().\s]/g, ''));
+                            return `Result: ${result}`;
+                        } catch (e) {
+                            throw new Error('Invalid mathematical expression');
+                        }
+                    
+                    case 'simple':
+                        if (code === 'hello') return 'Type: string, Value: "hello"';
+                        if (code === '123') return 'Type: number, Value: 123';
+                        if (code === 'true') return 'Type: boolean, Value: true';
+                        return `Parsed: ${code}`;
+                    
+                    case 'compiler':
+                        return `Compiled code:\n${code}\n\nGenerated assembly:\nMOV R1, 10\nPRINT R1`;
+                    
+                    default:
+                        return 'Unknown mode';
+                }
+            }
+            
+            // New terminal commands
+            listFiles() {
+                this.addOutput(`<div class="terminal-line">
+                    <span class="prompt">user@compiler:~$</span>
+                    <span class="command command-echo">ls</span>
+                </div>`);
+                
+                const files = [
+                    '📁 src/',
+                    '📁 dist/',
+                    '📁 node_modules/',
+                    '📄 package.json',
+                    '📄 tsconfig.json',
+                    '📄 vite.config.ts',
+                    '📄 README.md',
+                    '📄 index.html',
+                    '📄 terminal.html',
+                    '📄 compiler.html'
+                ];
+                
+                this.addOutput(`<div class="output">
+                    ${files.join('<br>')}
+                </div>`, 'info');
+            }
+            
+            printWorkingDirectory() {
+                this.addOutput(`<div class="terminal-line">
+                    <span class="prompt">user@compiler:~$</span>
+                    <span class="command command-echo">pwd</span>
+                </div>`);
+                this.addOutput(`<div class="output">/home/user/compiler-visualizer</div>`, 'info');
+            }
+            
+            whoAmI() {
+                this.addOutput(`<div class="terminal-line">
+                    <span class="prompt">user@compiler:~$</span>
+                    <span class="command command-echo">whoami</span>
+                </div>`);
+                this.addOutput(`<div class="output">user</div>`, 'info');
+            }
+            
+            showDate() {
+                this.addOutput(`<div class="terminal-line">
+                    <span class="prompt">user@compiler:~$</span>
+                    <span class="command command-echo">date</span>
+                </div>`);
+                const now = new Date();
+                this.addOutput(`<div class="output">${now.toLocaleString()}</div>`, 'info');
+            }
+            
+            showUptime() {
+                this.addOutput(`<div class="terminal-line">
+                    <span class="prompt">user@compiler:~$</span>
+                    <span class="command command-echo">uptime</span>
+                </div>`);
+                this.addOutput(`<div class="output">
+                    up 2 days, 14 hours, 23 minutes<br>
+                    load average: 0.15, 0.08, 0.05
+                </div>`, 'info');
+            }
+        }
+        
+        // Terminal control functions
+        function closeTerminal() {
+            if (confirm('Are you sure you want to close the terminal?')) {
+                window.location.href = '/index.html';
+            }
+        }
+        
+        function minimizeTerminal() {
+            // In a real app, this would minimize the window
+            alert('Minimize functionality would be implemented in a desktop app');
+        }
+        
+        function maximizeTerminal() {
+            // In a real app, this would maximize the window
+            alert('Maximize functionality would be implemented in a desktop app');
+        }
+        
+        // Initialize terminal
+        let terminal;
+        document.addEventListener('DOMContentLoaded', () => {
+            terminal = new Terminal();
+        });
+    </script>
+</body>
+</html>
