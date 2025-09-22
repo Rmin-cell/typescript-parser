@@ -1137,6 +1137,7 @@
                 <h1 class="terminal-glow">Welcome to Compiler Visualizer Terminal</h1>
                 <p>Type <span class="keyword">help</span> to see available commands</p>
                 <p>Type <span class="keyword">calc</span>, <span class="keyword">simple</span>, or <span class="keyword">compiler</span> to start a mode</p>
+                <p>Type <span class="keyword">home</span> to return to the landing page</p>
                 <p>Type <span class="keyword">exit</span> to return to the main page</p>
             </div>
             
@@ -1167,6 +1168,7 @@
                     help: this.showHelp.bind(this),
                     clear: this.clearTerminal.bind(this),
                     exit: this.exitTerminal.bind(this),
+                    home: this.goToHome.bind(this),
                     calc: () => this.startMode('calc'),
                     simple: () => this.startMode('simple'),
                     compiler: () => this.startMode('compiler'),
@@ -1353,6 +1355,7 @@
                         <li><span class="command-name">help</span><span class="command-desc">Show this help message</span></li>
                         <li><span class="command-name">clear</span><span class="command-desc">Clear the terminal screen</span></li>
                         <li><span class="command-name">exit</span><span class="command-desc">Return to main page</span></li>
+                        <li><span class="command-name">home</span><span class="command-desc">Go back to landing page</span></li>
                         <li><span class="command-name">ls</span><span class="command-desc">List directory contents</span></li>
                         <li><span class="command-name">pwd</span><span class="command-desc">Print working directory</span></li>
                         <li><span class="command-name">whoami</span><span class="command-desc">Display current user</span></li>
@@ -1379,6 +1382,17 @@
                     <span class="command">exit</span>
                 </div>`);
                 this.addOutput(`<div class="output success">Goodbye! Returning to main page...</div>`);
+                setTimeout(() => {
+                    window.location.href = '/index.html';
+                }, 1000);
+            }
+            
+            goToHome() {
+                this.addOutput(`<div class="terminal-line">
+                    <span class="prompt">user@compiler:~$</span>
+                    <span class="command">home</span>
+                </div>`);
+                this.addOutput(`<div class="output success">🏠 Returning to landing page...</div>`);
                 setTimeout(() => {
                     window.location.href = '/index.html';
                 }, 1000);
