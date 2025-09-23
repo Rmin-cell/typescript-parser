@@ -7,7 +7,94 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- CodeMirror CSS and JS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/theme/monokai.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/theme/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/mode/clike/clike.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/mode/python/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/mode/css/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/mode/htmlmixed/htmlmixed.min.js"></script>
     <style>
+        /* ===== UNIFIED DESIGN SYSTEM ===== */
+        :root {
+            /* === COLOR PALETTE === */
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --bg-header: #2d2d30;
+            --bg-header-gradient: linear-gradient(to bottom, #2d2d30 0%, #1e1e1e 100%);
+            
+            --text-primary: #f0f6fc;
+            --text-secondary: #8b949e;
+            --text-muted: #6e7681;
+            --text-accent: #7c3aed;
+            
+            --border-primary: #30363d;
+            --border-secondary: #21262d;
+            --border-accent: #7c3aed;
+            
+            --accent-primary: #7c3aed;
+            --accent-secondary: #4ec9b0;
+            --accent-success: #4ec9b0;
+            --accent-warning: #ffcc02;
+            --accent-error: #f44747;
+            --accent-info: #569cd6;
+            
+            /* === TYPOGRAPHY === */
+            --font-primary: 'SF Mono', Monaco, 'Cascadia Code', 'Fira Code', 'JetBrains Mono', Consolas, 'Courier New', monospace;
+            --font-system: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            
+            --font-size-xs: 11px;
+            --font-size-sm: 12px;
+            --font-size-base: 14px;
+            --font-size-lg: 16px;
+            --font-size-xl: 18px;
+            --font-size-2xl: 24px;
+            
+            --font-weight-normal: 400;
+            --font-weight-medium: 500;
+            --font-weight-semibold: 600;
+            --font-weight-bold: 700;
+            
+            --line-height-tight: 1.4;
+            --line-height-normal: 1.6;
+            --line-height-relaxed: 1.8;
+            
+            /* === SPACING === */
+            --space-xs: 4px;
+            --space-sm: 8px;
+            --space-md: 12px;
+            --space-lg: 16px;
+            --space-xl: 20px;
+            --space-2xl: 24px;
+            --space-3xl: 32px;
+            
+            /* === BORDERS & RADIUS === */
+            --radius-sm: 4px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+            
+            --border-width: 1px;
+            --border-width-thick: 2px;
+            
+            /* === SHADOWS === */
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.1);
+            --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.2);
+            --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.3);
+            --shadow-xl: 0 8px 32px rgba(0, 0, 0, 0.4);
+            
+            /* === TRANSITIONS === */
+            --transition-fast: 0.15s ease;
+            --transition-normal: 0.2s ease;
+            --transition-slow: 0.3s ease;
+        }
+        
         * {
             margin: 0;
             padding: 0;
@@ -15,64 +102,36 @@
         }
         
         body {
-            font-family: 'Fira Code', 'JetBrains Mono', 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
-            background: #1e1e1e;
-            color: #f0f0f0;
+            font-family: 'SF Mono', 'Monaco', 'Menlo', 'Ubuntu Mono', 'Fira Code', monospace;
+            background: #1a1a1a;
+            color: #e0e6ed;
             height: 100vh;
             overflow: hidden;
             user-select: text;
+            padding: 0;
+            margin: 0;
         }
         
         .terminal-container {
             height: 100vh;
             display: flex;
             flex-direction: column;
-            background: #1e1e1e;
+            background: #1a1a1a;
+            overflow: hidden;
+            margin: 0;
         }
         
-        .terminal-header {
-            background: #2d2d30;
-            padding: 8px 16px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 1px solid #3c3c3c;
-        }
-        
-        .terminal-title {
-            color: #cccccc;
-            font-size: 14px;
-            font-weight: 500;
-        }
-        
-        .terminal-controls {
-            display: flex;
-            gap: 8px;
-        }
-        
-        .control-btn {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            border: none;
-            cursor: pointer;
-        }
-        
-        .close { background: #ff5f56; }
-        .minimize { background: #ffbd2e; }
-        .maximize { background: #27ca3f; }
+        /* Remove header for bare terminal */
         
         .terminal-body {
             flex: 1;
-            padding: 16px;
+            padding: 20px;
             overflow-y: auto;
-            background: #1e1e1e;
+            background: #1a1a1a;
             font-size: 14px;
-            line-height: 1.4;
-            font-family: 'Fira Code', 'JetBrains Mono', 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
-            background-image: 
-                radial-gradient(circle at 1px 1px, rgba(255,255,255,0.05) 1px, transparent 0);
-            background-size: 20px 20px;
+            line-height: 1.6;
+            font-family: 'SF Mono', 'Monaco', 'Menlo', 'Ubuntu Mono', 'Fira Code', monospace;
+            color: #e0e6ed;
         }
         
         .terminal-line {
@@ -86,41 +145,43 @@
             color: #4ec9b0;
             margin-right: 8px;
             white-space: nowrap;
-            font-weight: 500;
+            font-weight: 600;
         }
         
         .command {
-            color: #f0f0f0;
+            color: #e0e6ed;
             flex: 1;
             word-wrap: break-word;
+            font-weight: 400;
         }
         
         .output {
-            color: #cccccc;
+            color: #a0a6b1;
             margin-left: 0;
             white-space: pre-wrap;
             word-wrap: break-word;
+            font-weight: 400;
         }
         
         .error {
-            color: #f44747;
+            color: var(--accent-error);
         }
         
         .success {
-            color: #4ec9b0;
+            color: var(--accent-success);
         }
         
         .warning {
-            color: #ffcc02;
+            color: var(--accent-warning);
         }
         
         .info {
-            color: #569cd6;
+            color: var(--accent-info);
         }
         
         .keyword {
-            color: #569cd6;
-            font-weight: bold;
+            color: var(--accent-info);
+            font-weight: var(--font-weight-bold);
         }
         
         .string {
@@ -253,11 +314,11 @@
         
         .compiler-interface {
             display: none;
-            margin-top: 20px;
-            padding: 16px;
-            background: #252526;
-            border-radius: 8px;
-            border: 1px solid #3c3c3c;
+            margin-top: 24px;
+            padding: 0;
+            background: transparent;
+            border: none;
+            width: 100%;
         }
         
         .compiler-interface.active {
@@ -268,29 +329,32 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 16px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid #3c3c3c;
+            margin-bottom: 24px;
+            padding: 0;
+            border: none;
         }
         
         .compiler-title {
             color: #4ec9b0;
             font-size: 18px;
-            font-weight: bold;
+            font-weight: 600;
         }
         
         .back-btn {
-            background: #3c3c3c;
-            color: #f0f0f0;
-            border: none;
-            padding: 6px 12px;
+            background: #2d2d30;
+            color: #e0e6ed;
+            border: 1px solid #3c3c3c;
+            padding: 8px 16px;
             border-radius: 4px;
             cursor: pointer;
             font-size: 12px;
+            font-weight: 500;
+            transition: all 0.2s ease;
         }
         
         .back-btn:hover {
-            background: #4c4c4c;
+            background: #3c3c3c;
+            border-color: #4ec9b0;
         }
         
         .code-input {
@@ -299,42 +363,55 @@
             border: 1px solid #3c3c3c;
             border-radius: 4px;
             padding: 12px;
-            color: #f0f0f0;
-            font-family: inherit;
+            color: #e0e6ed;
+            font-family: 'SF Mono', 'Monaco', 'Menlo', 'Ubuntu Mono', 'Fira Code', monospace;
             font-size: 14px;
             resize: vertical;
-            min-height: 100px;
+            min-height: 200px;
+            transition: all 0.2s ease;
+        }
+        
+        .code-input:focus {
+            outline: none;
+            border-color: #4ec9b0;
         }
         
         .run-btn {
             background: #4ec9b0;
-            color: #1e1e1e;
+            color: #1a1a1a;
             border: none;
-            padding: 8px 16px;
+            padding: 10px 20px;
             border-radius: 4px;
             cursor: pointer;
-            font-weight: bold;
-            margin-top: 8px;
+            font-weight: 600;
+            margin-top: 12px;
+            transition: all 0.2s ease;
         }
         
         .run-btn:hover {
-            background: #3ba89a;
+            background: #5ed9c0;
         }
         
         .result-output {
             margin-top: 16px;
-            padding: 12px;
+            padding: 16px;
             background: #1e1e1e;
             border-radius: 4px;
             border: 1px solid #3c3c3c;
             white-space: pre-wrap;
-            font-family: 'Fira Code', monospace;
+            font-family: 'SF Mono', 'Monaco', 'Menlo', 'Ubuntu Mono', 'Fira Code', monospace;
             min-height: 100px;
+            color: #e0e6ed;
+            transition: all 0.2s ease;
+        }
+        
+        .result-output:hover {
+            border-color: #4ec9b0;
         }
         
         .scrollbar {
             scrollbar-width: thin;
-            scrollbar-color: #3c3c3c #1e1e1e;
+            scrollbar-color: var(--border-primary) var(--bg-primary);
         }
         
         .scrollbar::-webkit-scrollbar {
@@ -342,25 +419,101 @@
         }
         
         .scrollbar::-webkit-scrollbar-track {
-            background: #1e1e1e;
+            background: var(--bg-primary);
         }
         
         .scrollbar::-webkit-scrollbar-thumb {
-            background: #3c3c3c;
-            border-radius: 4px;
+            background: var(--border-primary);
+            border-radius: var(--radius-sm);
         }
         
         .scrollbar::-webkit-scrollbar-thumb:hover {
-            background: #4c4c4c;
+            background: var(--border-accent);
         }
+        
+        /* ===== CODEMIRROR CLEAN STYLING ===== */
+        .CodeMirror {
+            background: #1e1e1e !important;
+            color: #e0e6ed !important;
+            border: 1px solid #3c3c3c !important;
+            border-radius: 4px !important;
+            font-family: 'SF Mono', 'Monaco', 'Menlo', 'Ubuntu Mono', 'Fira Code', monospace !important;
+            font-size: 14px !important;
+            line-height: 1.6 !important;
+            height: 300px !important;
+            transition: all 0.2s ease !important;
+        }
+        
+        .CodeMirror:focus-within {
+            border-color: #4ec9b0 !important;
+        }
+        
+        .CodeMirror-gutters {
+            background: #2d2d30 !important;
+            border-right: 1px solid #3c3c3c !important;
+        }
+        
+        .CodeMirror-linenumber {
+            color: #a0a6b1 !important;
+            font-size: 12px !important;
+        }
+        
+        .CodeMirror-cursor {
+            border-left: 2px solid #4ec9b0 !important;
+        }
+        
+        .CodeMirror-selected {
+            background: rgba(78, 201, 176, 0.2) !important;
+        }
+        
+        .CodeMirror-focused .CodeMirror-selected {
+            background: rgba(78, 201, 176, 0.3) !important;
+        }
+        
+        .CodeMirror-line::selection,
+        .CodeMirror-line > span::selection,
+        .CodeMirror-line > span > span::selection {
+            background: rgba(78, 201, 176, 0.3) !important;
+        }
+        
+        .CodeMirror-activeline-background {
+            background: rgba(78, 201, 176, 0.05) !important;
+        }
+        
+        .CodeMirror-matchingbracket {
+            background: rgba(78, 201, 176, 0.3) !important;
+            color: #e0e6ed !important;
+        }
+        
+        .CodeMirror-nonmatchingbracket {
+            background: #f44747 !important;
+            color: #e0e6ed !important;
+        }
+        
+        /* Clean syntax highlighting */
+        .CodeMirror .cm-keyword { color: #4ec9b0 !important; font-weight: 600; }
+        .CodeMirror .cm-string { color: #ce9178 !important; }
+        .CodeMirror .cm-number { color: #b5cea8 !important; }
+        .CodeMirror .cm-comment { color: #6a9955 !important; }
+        .CodeMirror .cm-variable { color: #e0e6ed !important; }
+        .CodeMirror .cm-def { color: #4ec9b0 !important; font-weight: 600; }
+        .CodeMirror .cm-operator { color: #4ec9b0 !important; }
+        .CodeMirror .cm-bracket { color: #e0e6ed !important; }
+        .CodeMirror .cm-tag { color: #569cd6 !important; }
+        .CodeMirror .cm-attribute { color: #4ec9b0 !important; }
         
         .fade-in {
             animation: fadeIn 0.5s ease-in;
         }
         
+        /* ===== CLEAN ANIMATIONS ===== */
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+        
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
         
         /* Terminal-specific effects */
@@ -396,32 +549,7 @@
             pointer-events: none;
         }
         
-        .matrix-rain {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            overflow: hidden;
-            z-index: 1;
-        }
         
-        .matrix-char {
-            position: absolute;
-            color: #4ec9b0;
-            font-family: 'Fira Code', monospace;
-            font-size: 12px;
-            opacity: 0.1;
-            animation: matrix-fall linear infinite;
-        }
-        
-        @keyframes matrix-fall {
-            0% { transform: translateY(-100vh); opacity: 0; }
-            10% { opacity: 0.1; }
-            90% { opacity: 0.1; }
-            100% { transform: translateY(100vh); opacity: 0; }
-        }
         
         .terminal-focus {
             box-shadow: 0 0 20px rgba(78, 201, 176, 0.3);
@@ -505,10 +633,15 @@
         
         .panel-details {
             margin: 8px 0;
-            background: #252526;
+            background: #1e1e1e;
             border: 1px solid #3c3c3c;
-            border-radius: 8px;
+            border-radius: 4px;
             overflow: hidden;
+            transition: all 0.2s ease;
+        }
+        
+        .panel-details:hover {
+            border-color: #4ec9b0;
         }
         
         .panel-details summary {
@@ -516,17 +649,18 @@
             background: #2d2d30;
             cursor: pointer;
             font-weight: 600;
-            color: #f0f0f0;
+            color: #4ec9b0;
             border-bottom: 1px solid #3c3c3c;
             display: flex;
             align-items: center;
             gap: 8px;
-            transition: background-color 0.2s ease;
+            transition: all 0.2s ease;
         }
         
         .panel-details summary:hover {
             background: #3c3c3c;
         }
+        
         
         .panel-details summary::before {
             content: "▶";
@@ -544,21 +678,22 @@
         }
         
         .panel-content pre {
-            background: #1e1e1e;
+            background: #2d2d30;
             border: 1px solid #3c3c3c;
-            border-radius: 6px;
+            border-radius: 4px;
             padding: 12px;
             margin: 0;
             font-size: 13px;
             line-height: 1.4;
-            color: #d4d4d4;
+            color: #e0e6ed;
             overflow-x: auto;
+            font-family: 'SF Mono', 'Monaco', 'Menlo', 'Ubuntu Mono', 'Fira Code', monospace;
         }
         
         .code-editor-container {
             position: relative;
             border: 1px solid #3c3c3c;
-            border-radius: 6px;
+            border-radius: 4px;
             background: #1e1e1e;
             overflow: hidden;
             margin-bottom: 12px;
@@ -569,18 +704,18 @@
             padding: 8px 12px;
             border-bottom: 1px solid #3c3c3c;
             font-size: 12px;
-            color: #969696;
+            color: #4ec9b0;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-family: 'Courier New', monospace;
+            font-family: 'SF Mono', 'Monaco', 'Menlo', 'Ubuntu Mono', 'Fira Code', monospace;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
         
         .code-editor-header::before {
             content: '● ● ●';
-            color: #f44747;
+            color: #4ec9b0;
             margin-right: 8px;
         }
         
@@ -1120,21 +1255,10 @@
 </head>
 <body>
     <div class="terminal-container">
-        <div class="terminal-header">
-            <div class="terminal-title">Terminal - Compiler Visualizer</div>
-            <div class="terminal-controls">
-                <button class="control-btn close" onclick="closeTerminal()"></button>
-                <button class="control-btn minimize" onclick="minimizeTerminal()"></button>
-                <button class="control-btn maximize" onclick="maximizeTerminal()"></button>
-            </div>
-        </div>
         
         <div class="terminal-body scrollbar" id="terminal-body">
-            <div class="matrix-rain" id="matrix-rain"></div>
-            <div class="scan-line"></div>
             
             <div class="welcome-message fade-in">
-                <h1 class="terminal-glow">Welcome to Compiler Visualizer Terminal</h1>
                 <p>Type <span class="keyword">help</span> to see available commands</p>
                 <p>Type <span class="keyword">calc</span>, <span class="keyword">simple</span>, or <span class="keyword">compiler</span> to start a mode</p>
                 <p>Type <span class="keyword">home</span> to return to the landing page</p>
@@ -1160,7 +1284,6 @@
                 this.output = document.getElementById('terminal-output');
                 this.input = document.getElementById('terminal-input');
                 this.body = document.getElementById('terminal-body');
-                this.matrixRain = document.getElementById('matrix-rain');
                 this.isTyping = false;
                 this.typingSpeed = 30; // ms per character
                 
@@ -1189,7 +1312,6 @@
                 this.input.addEventListener('focus', () => this.addFocusEffect());
                 this.input.addEventListener('blur', () => this.removeFocusEffect());
                 this.input.focus();
-                this.startMatrixRain();
                 this.addTerminalGlow();
             }
             
@@ -1206,28 +1328,6 @@
                 this.body.style.boxShadow = 'inset 0 0 20px rgba(78, 201, 176, 0.1)';
             }
             
-            startMatrixRain() {
-                const chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン';
-                const matrixChars = chars.split('');
-                
-                setInterval(() => {
-                    if (Math.random() < 0.1) {
-                        const char = document.createElement('div');
-                        char.className = 'matrix-char';
-                        char.textContent = matrixChars[Math.floor(Math.random() * matrixChars.length)];
-                        char.style.left = Math.random() * 100 + '%';
-                        char.style.animationDuration = (Math.random() * 3 + 2) + 's';
-                        char.style.animationDelay = Math.random() * 2 + 's';
-                        this.matrixRain.appendChild(char);
-                        
-                        setTimeout(() => {
-                            if (char.parentNode) {
-                                char.parentNode.removeChild(char);
-                            }
-                        }, 5000);
-                    }
-                }, 100);
-            }
             
             handleKeyDown(e) {
                 if (e.key === 'Enter') {
@@ -1361,8 +1461,6 @@
                         <li><span class="command-name">whoami</span><span class="command-desc">Display current user</span></li>
                         <li><span class="command-name">date</span><span class="command-desc">Show current date and time</span></li>
                         <li><span class="command-name">uptime</span><span class="command-desc">Show system uptime</span></li>
-                        <li><span class="command-name">calc</span><span class="command-desc">Start Calculator mode</span></li>
-                        <li><span class="command-name">simple</span><span class="command-desc">Start Simple parser mode</span></li>
                         <li><span class="command-name">compiler</span><span class="command-desc">Start Full Compiler mode</span></li>
                     </ul>
                 </div>`, 'info');
@@ -1410,20 +1508,14 @@
             
             showModeInterface(mode) {
                 const modeNames = {
-                    calc: 'Calculator',
-                    simple: 'Simple Parser',
                     compiler: 'Full Compiler'
                 };
                 
                 const modeDescriptions = {
-                    calc: 'Mathematical expressions with operator precedence.',
-                    simple: 'Parse strings, numbers, and boolean values.',
                     compiler: 'Complete compilation pipeline with visualization.'
                 };
                 
                 const examples = {
-                    calc: '3 + 5 * (10 - 4)',
-                    simple: 'hello',
                     compiler: 'let x = 10\nprint x'
                 };
                 
@@ -1444,8 +1536,7 @@
                                 <span id="line-count-${mode}">1 line</span>
                             </div>
                             <div class="code-editor-wrapper">
-                                <div class="line-numbers" id="line-numbers-${mode}">1</div>
-                                <textarea class="code-textarea" id="code-input-${mode}" placeholder="Enter your code here...&#10;Example: ${examples[mode]}">${examples[mode]}</textarea>
+                                <textarea id="code-input-${mode}" placeholder="Enter your code here...&#10;Example: ${examples[mode]}">${examples[mode]}</textarea>
                             </div>
                         </div>
                         <button class="run-btn" onclick="terminal.runCode()">▶ Run Code</button>
@@ -1457,48 +1548,8 @@
                     </div>
                 `;
                 
-                // Add mode-specific features
-                if (mode === 'calc') {
-                    interfaceHTML += `
-                    <!-- Calculator-specific features -->
-                    <div class="features-section">
-                        <div class="feature-grid">
-                            <div class="feature-item">
-                                <strong>Operations:</strong> +, -, *, /
-                            </div>
-                            <div class="feature-item">
-                                <strong>Parentheses:</strong> ( ) grouping
-                            </div>
-                            <div class="feature-item">
-                                <strong>Order:</strong> PEMDAS/BODMAS
-                            </div>
-                            <div class="feature-item">
-                                <strong>Decimals:</strong> 3.14, 2.5
-                            </div>
-                        </div>
-                    </div>
-                    `;
-                } else if (mode === 'simple') {
-                    interfaceHTML += `
-                    <!-- Simple Parser-specific features -->
-                    <div class="features-section">
-                        <div class="feature-grid">
-                            <div class="feature-item">
-                                <strong>Strings:</strong> "hello", 'world'
-                            </div>
-                            <div class="feature-item">
-                                <strong>Numbers:</strong> 123, 45.67
-                            </div>
-                            <div class="feature-item">
-                                <strong>Booleans:</strong> true, false
-                            </div>
-                            <div class="feature-item">
-                                <strong>Tokens:</strong> Lexical analysis
-                            </div>
-                        </div>
-                    </div>
-                    `;
-                } else if (mode === 'compiler') {
+                // Add compiler-specific features
+                if (mode === 'compiler') {
                     interfaceHTML += `
                     <!-- Compiler-specific panels -->
                     <div class="compiler-panels">
@@ -1562,17 +1613,79 @@
                 
                 this.addOutput(interfaceHTML);
                 
-                // Focus on the textarea and add event listeners
+                // Initialize CodeMirror editor
                 setTimeout(() => {
-                    const textarea = document.getElementById(`code-input-${mode}`);
-                    if (textarea) {
-                        textarea.focus();
-                        // Add event listener for line number updates
-                        textarea.addEventListener('input', () => {
-                            this.updateLineNumbers();
-                        });
-                    }
+                    this.initializeCodeMirror(mode);
                 }, 100);
+            }
+            
+            initializeCodeMirror(mode) {
+                const textarea = document.getElementById(`code-input-${mode}`);
+                if (!textarea) return;
+                
+                // Determine the language mode based on the mode
+                let languageMode = 'text/plain';
+                switch(mode) {
+                    case 'compiler':
+                        languageMode = 'text/x-csrc'; // C/C++ mode
+                        break;
+                    default:
+                        languageMode = 'text/plain';
+                }
+                
+                // Initialize CodeMirror
+                const editor = CodeMirror.fromTextArea(textarea, {
+                    mode: languageMode,
+                    theme: 'default',
+                    lineNumbers: true,
+                    lineWrapping: true,
+                    indentUnit: 4,
+                    tabSize: 4,
+                    indentWithTabs: true,
+                    electricChars: true,
+                    autoCloseBrackets: true,
+                    matchBrackets: true,
+                    styleActiveLine: true,
+                    foldGutter: true,
+                    gutters: ['CodeMirror-linenumbers', 'CodeMirror-foldgutter'],
+                    extraKeys: {
+                        'Ctrl-Space': 'autocomplete',
+                        'Ctrl-/': 'toggleComment',
+                        'Ctrl-A': 'selectAll',
+                        'Ctrl-Z': 'undo',
+                        'Ctrl-Y': 'redo',
+                        'Ctrl-F': 'find',
+                        'Ctrl-H': 'replace',
+                        'Ctrl-G': 'findNext',
+                        'F11': function(cm) {
+                            cm.setOption('fullScreen', !cm.getOption('fullScreen'));
+                        },
+                        'Esc': function(cm) {
+                            if (cm.getOption('fullScreen')) cm.setOption('fullScreen', false);
+                        }
+                    }
+                });
+                
+                // Store editor reference for later use
+                this.codeEditor = editor;
+                
+                // Update line count when content changes
+                editor.on('change', () => {
+                    this.updateLineCount(mode);
+                });
+                
+                // Focus the editor
+                editor.focus();
+            }
+            
+            updateLineCount(mode) {
+                if (this.codeEditor) {
+                    const lineCount = this.codeEditor.lineCount();
+                    const lineCountElement = document.getElementById(`line-count-${mode}`);
+                    if (lineCountElement) {
+                        lineCountElement.textContent = `${lineCount} line${lineCount !== 1 ? 's' : ''}`;
+                    }
+                }
             }
             
             backToTerminal() {
@@ -1593,12 +1706,11 @@
             runCode() {
                 if (!this.currentMode) return;
                 
-                const textarea = document.getElementById(`code-input-${this.currentMode}`);
                 const resultDiv = document.getElementById(`result-${this.currentMode}`);
                 
-                if (!textarea || !resultDiv) return;
+                if (!this.codeEditor || !resultDiv) return;
                 
-                const code = textarea.value.trim();
+                const code = this.codeEditor.getValue().trim();
                 if (!code) {
                     resultDiv.textContent = 'Please enter some code to run.';
                     return;
@@ -1607,13 +1719,10 @@
                 // Show loading state
                 resultDiv.innerHTML = '<div style="color: #4ec9b0;">🔄 Running code...</div>';
                 
-                // Update line numbers
-                this.updateLineNumbers();
-                
                 setTimeout(() => {
                     try {
                         const result = this.simulateCodeExecution(code, this.currentMode);
-                        resultDiv.innerHTML = `<div style="color: #4ec9b0;">✅ Execution completed</div><br><div style="color: #f0f0f0;">${result}</div>`;
+                        resultDiv.innerHTML = `<div style="color: #4ec9b0;">✅ Execution completed</div><br><div style="color: #e0e6ed;">${result}</div>`;
                         
                         // Populate all panels with realistic data
                         this.populateAllPanels(code, this.currentMode);
@@ -1624,19 +1733,6 @@
                 }, 1500);
             }
             
-            updateLineNumbers() {
-                const textarea = document.getElementById(`code-input-${this.currentMode}`);
-                const lineNumbersDiv = document.getElementById(`line-numbers-${this.currentMode}`);
-                const lineCountDiv = document.getElementById(`line-count-${this.currentMode}`);
-                
-                if (textarea && lineNumbersDiv && lineCountDiv) {
-                    const lines = textarea.value.split('\n');
-                    const lineCount = lines.length;
-                    
-                    lineNumbersDiv.textContent = lines.map((_, i) => i + 1).join('\n');
-                    lineCountDiv.textContent = `${lineCount} line${lineCount !== 1 ? 's' : ''}`;
-                }
-            }
             
             populateAllPanels(code, mode) {
                 // Populate tokens panel
@@ -2193,21 +2289,6 @@ t2: [2, 3]`;
                 // you would call the actual compiler modules
                 
                 switch (mode) {
-                    case 'calc':
-                        try {
-                            // Simple math evaluation (for demo purposes)
-                            const result = eval(code.replace(/[^0-9+\-*/().\s]/g, ''));
-                            return `Result: ${result}`;
-                        } catch (e) {
-                            throw new Error('Invalid mathematical expression');
-                        }
-                    
-                    case 'simple':
-                        if (code === 'hello') return 'Type: string, Value: "hello"';
-                        if (code === '123') return 'Type: number, Value: 123';
-                        if (code === 'true') return 'Type: boolean, Value: true';
-                        return `Parsed: ${code}`;
-                    
                     case 'compiler':
                         return `Compiled code:\n${code}\n\nGenerated assembly:\nMOV R1, 10\nPRINT R1`;
                     
@@ -2294,6 +2375,7 @@ t2: [2, 3]`;
             // In a real app, this would maximize the window
             alert('Maximize functionality would be implemented in a desktop app');
         }
+        
         
         // Initialize terminal
         let terminal;
