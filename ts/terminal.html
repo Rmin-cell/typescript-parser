@@ -430,6 +430,151 @@
             margin-bottom: 4px;
         }
         
+        .ascii-art {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .ascii-logo {
+            font-family: 'Fira Code', monospace;
+            font-size: 8px;
+            line-height: 1;
+            color: #58a6ff;
+            text-shadow: 0 0 10px rgba(88, 166, 255, 0.5);
+            margin: 0;
+            white-space: pre;
+        }
+        
+        .system-info {
+            background: rgba(33, 38, 45, 0.5);
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-family: 'Fira Code', monospace;
+        }
+        
+        .info-line {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+        
+        .info-line:last-child {
+            margin-bottom: 0;
+        }
+        
+        .info-label {
+            color: #8b949e;
+            font-weight: 500;
+        }
+        
+        .info-value {
+            color: #f0f6fc;
+            font-weight: 600;
+        }
+        
+        .motd {
+            background: rgba(88, 166, 255, 0.1);
+            border: 1px solid rgba(88, 166, 255, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .motd-title {
+            color: #58a6ff;
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 10px;
+            text-shadow: 0 0 5px rgba(88, 166, 255, 0.3);
+        }
+        
+        .motd-content {
+            color: #f0f6fc;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        
+        .motd-content p {
+            margin-bottom: 8px;
+        }
+        
+        .motd-content ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        
+        .motd-content li {
+            margin-bottom: 5px;
+            color: #e0e6ed;
+        }
+        
+        .motd-content strong {
+            color: #4ec9b0;
+        }
+        
+        .installation-progress {
+            margin: 10px 0;
+            padding: 8px 0;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #21262d;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 5px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #58a6ff, #7c3aed, #4ec9b0);
+            border-radius: 2px;
+            width: 0%;
+            box-shadow: 0 0 8px rgba(88, 166, 255, 0.5);
+        }
+        
+        .progress-text {
+            color: #8b949e;
+            font-size: 12px;
+            font-family: 'Fira Code', monospace;
+            text-align: center;
+        }
+        
+        .cowsay-output {
+            margin: 10px 0;
+            padding: 8px 0;
+        }
+        
+        .cow-art {
+            font-family: 'Fira Code', monospace;
+            font-size: 12px;
+            line-height: 1.2;
+            color: #4ec9b0;
+            text-shadow: 0 0 5px rgba(78, 201, 176, 0.3);
+            margin: 0;
+            white-space: pre;
+            background: rgba(78, 201, 176, 0.1);
+            border: 1px solid rgba(78, 201, 176, 0.3);
+            border-radius: 8px;
+            padding: 12px;
+        }
+        
+        .minimal-cowsay {
+            margin-bottom: 20px;
+        }
+        
+        .minimal-cowsay .cow-art {
+            background: none;
+            border: none;
+            padding: 0;
+            margin: 0;
+            display: block;
+        }
+        
         .compiler-interface {
             display: none;
             margin-top: 24px;
@@ -458,22 +603,6 @@
             font-weight: 600;
         }
         
-        .back-btn {
-            background: #2d2d30;
-            color: #e0e6ed;
-            border: 1px solid #3c3c3c;
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 500;
-            transition: all 0.2s ease;
-        }
-        
-        .back-btn:hover {
-            background: #3c3c3c;
-            border-color: #4ec9b0;
-        }
         
         .code-input {
             width: 100%;
@@ -1401,16 +1530,25 @@
             <div class="terminal-body scrollbar" id="terminal-body">
             
             <div class="welcome-message fade-in">
-                <p>Type <span class="keyword">help</span> to see available commands</p>
-                <p>Type <span class="keyword">compiler</span> to start compiler mode</p>
-                <p>Type <span class="keyword">home</span> to return to the landing page</p>
-                <p>Type <span class="keyword">exit</span> to return to the main page</p>
+                <div class="minimal-cowsay">
+                    <pre class="cow-art">
+ _________________________________________
+/ Welcome to Compiler Visualizer! 🚀      \
+\ Type 'help' for commands                /
+ -----------------------------------------
+        \   ^__^
+         \  (oo)\_______
+            (__)\       )\/\
+                ||----w |
+                ||     ||
+                    </pre>
+                </div>
             </div>
             
             <div id="terminal-output"></div>
             
             <div class="input-line">
-                <span class="prompt terminal-glow">user@compiler:~$</span>
+                <span class="prompt terminal-glow" id="terminal-prompt">user@compiler:~$</span>
                 <input type="text" id="terminal-input" autocomplete="off" spellcheck="false">
                 <span class="cursor"></span>
             </div>
@@ -1424,6 +1562,7 @@
                 this.history = [];
                 this.historyIndex = -1;
                 this.currentMode = null;
+                this.username = 'user'; // Default username
                 this.output = document.getElementById('terminal-output');
                 this.input = document.getElementById('terminal-input');
                 this.body = document.getElementById('terminal-body');
@@ -1434,7 +1573,6 @@
                     help: this.showHelp.bind(this),
                     clear: this.clearTerminal.bind(this),
                     exit: this.exitTerminal.bind(this),
-                    home: this.goToHome.bind(this),
                     calc: () => this.startMode('calc'),
                     simple: () => this.startMode('simple'),
                     compiler: () => this.startMode('compiler'),
@@ -1444,7 +1582,9 @@
                     pwd: this.printWorkingDirectory.bind(this),
                     whoami: this.whoAmI.bind(this),
                     date: this.showDate.bind(this),
-                    uptime: this.showUptime.bind(this)
+                    uptime: this.showUptime.bind(this),
+                    rename: this.renameUser.bind(this),
+                    cowsay: this.cowSay.bind(this)
                 };
                 
                 this.init();
@@ -1456,6 +1596,10 @@
                 this.input.addEventListener('blur', () => this.removeFocusEffect());
                 this.input.focus();
                 this.addTerminalGlow();
+            }
+            
+            getPrompt() {
+                return `${this.username}@compiler:~$`;
             }
             
             addFocusEffect() {
@@ -1504,7 +1648,11 @@
                     return;
                 }
                 
-                if (this.commands[command]) {
+                // Handle cowsay with arguments
+                if (command.startsWith('cowsay ')) {
+                    const message = command.substring(7).trim();
+                    this.cowSay(message);
+                } else if (this.commands[command]) {
                     this.commands[command]();
                 } else {
                     this.addOutput(`<div class="terminal-line">
@@ -1588,7 +1736,7 @@
             
             showHelp() {
                 this.addOutput(`<div class="terminal-line">
-                    <span class="prompt">user@compiler:~$</span>
+                    <span class="prompt">${this.getPrompt()}</span>
                     <span class="command command-echo">help</span>
                 </div>`);
                 
@@ -1598,12 +1746,13 @@
                         <li><span class="command-name">help</span><span class="command-desc">Show this help message</span></li>
                         <li><span class="command-name">clear</span><span class="command-desc">Clear the terminal screen</span></li>
                         <li><span class="command-name">exit</span><span class="command-desc">Return to main page</span></li>
-                        <li><span class="command-name">home</span><span class="command-desc">Go back to landing page</span></li>
+                        <li><span class="command-name">rename</span><span class="command-desc">Change your username</span></li>
                         <li><span class="command-name">ls</span><span class="command-desc">List directory contents</span></li>
                         <li><span class="command-name">pwd</span><span class="command-desc">Print working directory</span></li>
                         <li><span class="command-name">whoami</span><span class="command-desc">Display current user</span></li>
                         <li><span class="command-name">date</span><span class="command-desc">Show current date and time</span></li>
                         <li><span class="command-name">uptime</span><span class="command-desc">Show system uptime</span></li>
+                        <li><span class="command-name">cowsay</span><span class="command-desc">Display a fun ASCII art message</span></li>
                         <li><span class="command-name">compiler</span><span class="command-desc">Start Full Compiler mode</span></li>
                     </ul>
                 </div>`, 'info');
@@ -1619,7 +1768,7 @@
             
             exitTerminal() {
                 this.addOutput(`<div class="terminal-line">
-                    <span class="prompt">user@compiler:~$</span>
+                    <span class="prompt">${this.getPrompt()}</span>
                     <span class="command">exit</span>
                 </div>`);
                 this.addOutput(`<div class="output success">Goodbye! Returning to main page...</div>`);
@@ -1628,25 +1777,221 @@
                 }, 1000);
             }
             
-            goToHome() {
+            renameUser() {
                 this.addOutput(`<div class="terminal-line">
-                    <span class="prompt">user@compiler:~$</span>
-                    <span class="command">home</span>
+                    <span class="prompt">${this.getPrompt()}</span>
+                    <span class="command">rename</span>
                 </div>`);
-                this.addOutput(`<div class="output success">🏠 Returning to landing page...</div>`);
-                setTimeout(() => {
-                    window.location.href = '/index.html?from=terminal';
-                }, 1000);
+                this.addOutput(`<div class="output info">Enter new username (or press Enter to cancel):</div>`);
+                
+                // Create a temporary input for username
+                const tempInput = document.createElement('input');
+                tempInput.type = 'text';
+                tempInput.style.background = 'transparent';
+                tempInput.style.border = 'none';
+                tempInput.style.outline = 'none';
+                tempInput.style.color = '#f0f6fc';
+                tempInput.style.fontFamily = 'inherit';
+                tempInput.style.fontSize = 'inherit';
+                tempInput.style.width = '200px';
+                tempInput.placeholder = 'new-username';
+                
+                const inputContainer = document.createElement('div');
+                inputContainer.className = 'terminal-line';
+                inputContainer.innerHTML = '<span class="prompt">username:</span>';
+                inputContainer.appendChild(tempInput);
+                
+                this.output.appendChild(inputContainer);
+                tempInput.focus();
+                
+                const handleRename = (e) => {
+                    if (e.key === 'Enter') {
+                        const newUsername = tempInput.value.trim();
+                        if (newUsername && newUsername.length > 0) {
+                            this.username = newUsername;
+                            // Update the prompt display
+                            const promptElement = document.getElementById('terminal-prompt');
+                            if (promptElement) {
+                                promptElement.textContent = this.getPrompt();
+                            }
+                            this.addOutput(`<div class="output success">✓ Username changed to '${newUsername}'</div>`);
+                            this.addOutput(`<div class="output info">New prompt: ${newUsername}@compiler:~$</div>`);
+                        } else {
+                            this.addOutput(`<div class="output warning">Username change cancelled</div>`);
+                        }
+                        inputContainer.remove();
+                        this.input.focus();
+                    } else if (e.key === 'Escape') {
+                        this.addOutput(`<div class="output warning">Username change cancelled</div>`);
+                        inputContainer.remove();
+                        this.input.focus();
+                    }
+                };
+                
+                tempInput.addEventListener('keydown', handleRename);
             }
             
             startMode(mode) {
                 this.addOutput(`<div class="terminal-line">
-                    <span class="prompt">user@compiler:~$</span>
+                    <span class="prompt">${this.getPrompt()}</span>
                     <span class="command">${mode}</span>
                 </div>`);
                 
-                this.currentMode = mode;
-                this.showModeInterface(mode);
+                if (mode === 'compiler') {
+                    this.showCompilerInstallation();
+                } else {
+                    this.currentMode = mode;
+                    this.showModeInterface(mode);
+                }
+            }
+            
+            showCompilerInstallation() {
+                this.addOutput(`<div class="output info">🔧 Initializing Compiler Environment...</div>`);
+                
+                const installationSteps = [
+                    {
+                        command: 'npm install @compiler/core',
+                        output: 'Installing core compiler modules...',
+                        duration: 1200,
+                        success: '✓ Core modules installed successfully'
+                    },
+                    {
+                        command: 'npm install @compiler/lexer',
+                        output: 'Installing lexical analyzer...',
+                        duration: 1000,
+                        success: '✓ Lexical analyzer v2.1.0 installed'
+                    },
+                    {
+                        command: 'npm install @compiler/parser',
+                        output: 'Installing parser engine...',
+                        duration: 1100,
+                        success: '✓ Parser engine v1.8.3 installed'
+                    },
+                    {
+                        command: 'npm install @compiler/codegen',
+                        output: 'Installing code generator...',
+                        duration: 1000,
+                        success: '✓ Code generator v3.2.1 installed'
+                    },
+                    {
+                        command: 'npm install @compiler/visualizer',
+                        output: 'Installing visualization tools...',
+                        duration: 1300,
+                        success: '✓ Visualization tools v1.5.0 installed'
+                    },
+                    {
+                        command: 'compiler --init',
+                        output: 'Initializing compiler configuration...',
+                        duration: 800,
+                        success: '✓ Compiler environment ready'
+                    }
+                ];
+                
+                let stepIndex = 0;
+                let totalDelay = 0;
+                
+                const executeInstallationStep = (step) => {
+                    setTimeout(() => {
+                        // Show command
+                        this.addOutput(`<div class="terminal-line">
+                            <span class="prompt">${this.getPrompt()}</span>
+                            <span class="command">${step.command}</span>
+                        </div>`);
+                        
+                        // Show progress
+                        this.addOutput(`<div class="output info">${step.output}</div>`);
+                        
+                        // Show installation progress bar
+                        this.showInstallationProgress(step.duration);
+                        
+                        // Show success after duration
+                        setTimeout(() => {
+                            this.addOutput(`<div class="output success">${step.success}</div>`);
+                            
+                            stepIndex++;
+                            if (stepIndex < installationSteps.length) {
+                                executeInstallationStep(installationSteps[stepIndex]);
+                            } else {
+                                // Installation complete
+                                setTimeout(() => {
+                                    this.addOutput(`<div class="output success">🎉 Compiler installation completed successfully!</div>`);
+                                    this.addOutput(`<div class="output info">Starting compiler interface...</div>`);
+                                    
+                                    setTimeout(() => {
+                                        this.currentMode = 'compiler';
+                                        this.showModeInterface('compiler');
+                                    }, 1000);
+                                }, 500);
+                            }
+                        }, step.duration);
+                    }, totalDelay);
+                    
+                    totalDelay += step.duration + 200;
+                };
+                
+                // Start installation
+                executeInstallationStep(installationSteps[0]);
+            }
+            
+            showInstallationProgress(duration) {
+                const progressContainer = document.createElement('div');
+                progressContainer.className = 'installation-progress';
+                progressContainer.innerHTML = `
+                    <div class="progress-bar">
+                        <div class="progress-fill"></div>
+                    </div>
+                    <div class="progress-text">Installing...</div>
+                `;
+                
+                this.output.appendChild(progressContainer);
+                
+                // Animate progress bar
+                const progressFill = progressContainer.querySelector('.progress-fill');
+                progressFill.style.transition = `width ${duration}ms linear`;
+                progressFill.style.width = '100%';
+                
+                // Remove progress bar after completion
+                setTimeout(() => {
+                    progressContainer.remove();
+                }, duration);
+            }
+            
+            cowSay(message = null) {
+                this.addOutput(`<div class="terminal-line">
+                    <span class="prompt">${this.getPrompt()}</span>
+                    <span class="command">cowsay${message ? ' "' + message + '"' : ''}</span>
+                </div>`);
+                
+                const messages = [
+                    "Welcome to the Compiler Visualizer! 🚀",
+                    "Type 'help' to see all available commands",
+                    "Type 'compiler' to start the full compiler mode",
+                    "This terminal is powered by TypeScript and React",
+                    "Happy coding! 💻",
+                    "Compiler Visualizer Terminal v2.1.0",
+                    "Built with TypeScript and React",
+                    "Ready to compile some code!"
+                ];
+                
+                const displayMessage = message || messages[Math.floor(Math.random() * messages.length)];
+                this.showCowSay(displayMessage);
+            }
+            
+            showCowSay(message) {
+                const cowArt = `
+ _________________________________________
+/ ${message.padEnd(40)} \\
+\\_________________________________________/
+        \\   ^__^
+         \\  (oo)\\_______
+            (__)\\       )\\/\\
+                ||----w |
+                ||     ||
+`;
+                
+                this.addOutput(`<div class="cowsay-output">
+                    <pre class="cow-art">${cowArt}</pre>
+                </div>`);
             }
             
             showModeInterface(mode) {
@@ -1667,7 +2012,6 @@
                 <div class="compiler-interface active">
                     <div class="compiler-header">
                         <div class="compiler-title">${modeNames[mode]} Mode <span class="mode-indicator mode-${mode}">${mode.toUpperCase()}</span></div>
-                        <button class="back-btn" onclick="terminal.backToTerminal()">← Back to Terminal</button>
                     </div>
                     <p style="color: #cccccc; margin-bottom: 16px;">${modeDescriptions[mode]}</p>
                     
