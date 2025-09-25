@@ -1,8 +1,8 @@
 import React from 'react';
-import AdvancedTerminal from './components/AdvancedTerminal';
+import LandingPage from './components/LandingPage';
 
 const App: React.FC = () => {
-  return <AdvancedTerminal />;
+  return <LandingPage />;
 };
 
 export default App;

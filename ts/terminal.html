@@ -1734,18 +1734,15 @@
                 // Show loading state
                 resultDiv.innerHTML = '<div style="color: #4ec9b0;">🔄 Running code...</div>';
                 
-                setTimeout(() => {
-                    try {
-                        const result = this.simulateCodeExecution(code, this.currentMode);
-                        resultDiv.innerHTML = `<div style="color: #4ec9b0;">✅ Execution completed</div><br><div style="color: #e0e6ed;">${result}</div>`;
-                        
-                        // Populate all panels with realistic data
-                        this.populateAllPanels(code, this.currentMode);
-                        
-                    } catch (error) {
-                        resultDiv.innerHTML = `<div style="color: #f44747;">❌ Error: ${error.message}</div>`;
-                    }
-                }, 1500);
+                // Execute code with real compiler
+                this.executeCode(code, this.currentMode).then(result => {
+                    resultDiv.innerHTML = `<div style="color: #4ec9b0;">✅ Execution completed</div><br><div style="color: #e0e6ed;">${result}</div>`;
+                    
+                    // Populate all panels with real compiler data
+                    this.populateAllPanels(code, this.currentMode);
+                }).catch(error => {
+                    resultDiv.innerHTML = `<div style="color: #f44747;">❌ Error: ${error.message}</div>`;
+                });
             }
             
             
@@ -2299,16 +2296,18 @@ t2: [2, 3]`;
                 }).join(' ');
             }
             
-            simulateCodeExecution(code, mode) {
-                // This is a simplified simulation - in a real implementation,
-                // you would call the actual compiler modules
-                
-                switch (mode) {
-                    case 'compiler':
-                        return `Compiled code:\n${code}\n\nGenerated assembly:\nMOV R1, 10\nPRINT R1`;
+            async executeCode(code, mode) {
+                try {
+                    // Import the real compiler interpreter
+                    const { CompilerInterpreter } = await import('./src/compiler/interpreter.ts');
+                    const interpreter = new CompilerInterpreter();
                     
-                    default:
-                        return 'Unknown mode';
+                    // Execute the code using the real compiler
+                    const result = interpreter.interpret(code);
+                    return result;
+                } catch (error) {
+                    console.error('Compiler error:', error);
+                    return `Compilation error: ${error.message}`;
                 }
             }
             
