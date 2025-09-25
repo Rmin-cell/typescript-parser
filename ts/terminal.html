@@ -116,43 +116,158 @@
             height: 100vh;
             display: flex;
             flex-direction: column;
-            background: #1a1a1a;
+            background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
             overflow: hidden;
             margin: 0;
+            position: relative;
         }
         
-        /* Remove header for bare terminal */
+        /* Modern Terminal Window */
+        .terminal-window {
+            width: 100%;
+            height: 100%;
+            background: #0d1117;
+            border: 2px solid #30363d;
+            border-radius: 12px;
+            box-shadow: 0 0 30px rgba(88, 166, 255, 0.3);
+            overflow: hidden;
+            font-family: 'Fira Code', monospace;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        
+        .terminal-window::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(88, 166, 255, 0.05) 0%, rgba(124, 58, 237, 0.05) 100%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        .terminal-window > * {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .terminal-header {
+            background: #21262d;
+            padding: 12px 20px;
+            border-bottom: 1px solid #30363d;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+        
+        .terminal-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .terminal-button {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        
+        .terminal-button.close {
+            background: #f85149;
+        }
+        
+        .terminal-button.minimize {
+            background: #ffcc02;
+        }
+        
+        .terminal-button.maximize {
+            background: #4ec9b0;
+        }
+        
+        .terminal-button:hover {
+            transform: scale(1.1);
+            transition: transform 0.2s ease;
+        }
+        
+        .terminal-button.close:hover {
+            background: #ff6b6b;
+            box-shadow: 0 0 10px rgba(248, 81, 73, 0.5);
+        }
+        
+        .terminal-button.minimize:hover {
+            background: #ffd93d;
+            box-shadow: 0 0 10px rgba(255, 204, 2, 0.5);
+        }
+        
+        .terminal-button.maximize:hover {
+            background: #5dd4c7;
+            box-shadow: 0 0 10px rgba(78, 201, 176, 0.5);
+        }
+        
+        .terminal-title {
+            color: #8b949e;
+            font-size: 14px;
+            margin-left: 20px;
+            font-weight: 500;
+        }
         
         .terminal-body {
             flex: 1;
             padding: 20px;
             overflow-y: auto;
-            background: #1a1a1a;
+            background: #0d1117;
             font-size: 14px;
             line-height: 1.6;
-            font-family: 'SF Mono', 'Monaco', 'Menlo', 'Ubuntu Mono', 'Fira Code', monospace;
-            color: #e0e6ed;
+            font-family: 'Fira Code', monospace;
+            color: #f0f6fc;
         }
         
         .terminal-line {
-            margin-bottom: 4px;
+            margin-bottom: 8px;
             display: flex;
             align-items: flex-start;
             min-height: 20px;
+            color: #58a6ff;
+            font-size: 14px;
+            line-height: 1.4;
+            white-space: pre-wrap;
         }
         
         .prompt {
             color: #4ec9b0;
             margin-right: 8px;
             white-space: nowrap;
-            font-weight: 600;
+            font-weight: bold;
         }
         
         .command {
-            color: #e0e6ed;
+            color: #f0f6fc;
             flex: 1;
             word-wrap: break-word;
             font-weight: 400;
+        }
+        
+        .output {
+            color: #8b949e;
+        }
+        
+        .output.success {
+            color: #4ec9b0;
+        }
+        
+        .output.info {
+            color: #58a6ff;
+        }
+        
+        .output.warning {
+            color: #ffcc02;
+        }
+        
+        .output.error {
+            color: #f85149;
         }
         
         .output {
@@ -201,32 +316,35 @@
             display: flex;
             align-items: center;
             margin-top: 8px;
+            padding: 8px 0;
         }
         
         .input-line .prompt {
             color: #4ec9b0;
             margin-right: 8px;
+            font-weight: bold;
         }
         
         .input-line input {
             background: transparent;
             border: none;
             outline: none;
-            color: #f0f0f0;
-            font-family: inherit;
-            font-size: inherit;
+            color: #f0f6fc;
+            font-family: 'Fira Code', monospace;
+            font-size: 14px;
             flex: 1;
-            caret-color: #4ec9b0;
-            text-shadow: 0 0 5px rgba(78, 201, 176, 0.3);
+            caret-color: #58a6ff;
+            text-shadow: 0 0 5px rgba(88, 166, 255, 0.3);
         }
         
         .cursor {
             display: inline-block;
             width: 8px;
             height: 16px;
-            background: #4ec9b0;
+            background: #58a6ff;
             animation: blink 1s infinite;
             margin-left: 2px;
+            box-shadow: 0 0 5px rgba(88, 166, 255, 0.5);
         }
         
         @keyframes blink {
@@ -1270,12 +1388,21 @@
 </head>
 <body>
     <div class="terminal-container">
-        
-        <div class="terminal-body scrollbar" id="terminal-body">
+        <div class="terminal-window">
+            <div class="terminal-header">
+                <div class="terminal-buttons">
+                    <div class="terminal-button close" onclick="closeTerminal()"></div>
+                    <div class="terminal-button minimize" onclick="minimizeTerminal()"></div>
+                    <div class="terminal-button maximize" onclick="maximizeTerminal()"></div>
+                </div>
+                <div class="terminal-title">Compiler Terminal</div>
+            </div>
+            
+            <div class="terminal-body scrollbar" id="terminal-body">
             
             <div class="welcome-message fade-in">
                 <p>Type <span class="keyword">help</span> to see available commands</p>
-                <p>Type <span class="keyword">calc</span>, <span class="keyword">simple</span>, or <span class="keyword">compiler</span> to start a mode</p>
+                <p>Type <span class="keyword">compiler</span> to start compiler mode</p>
                 <p>Type <span class="keyword">home</span> to return to the landing page</p>
                 <p>Type <span class="keyword">exit</span> to return to the main page</p>
             </div>
@@ -1286,6 +1413,7 @@
                 <span class="prompt terminal-glow">user@compiler:~$</span>
                 <input type="text" id="terminal-input" autocomplete="off" spellcheck="false">
                 <span class="cursor"></span>
+            </div>
             </div>
         </div>
     </div>
@@ -1496,7 +1624,7 @@
                 </div>`);
                 this.addOutput(`<div class="output success">Goodbye! Returning to main page...</div>`);
                 setTimeout(() => {
-                    window.location.href = '/index.html';
+                    window.location.href = '/index.html?from=terminal';
                 }, 1000);
             }
             
@@ -1507,7 +1635,7 @@
                 </div>`);
                 this.addOutput(`<div class="output success">🏠 Returning to landing page...</div>`);
                 setTimeout(() => {
-                    window.location.href = '/index.html';
+                    window.location.href = '/index.html?from=terminal';
                 }, 1000);
             }
             
@@ -2376,7 +2504,7 @@ t2: [2, 3]`;
         // Terminal control functions
         function closeTerminal() {
             if (confirm('Are you sure you want to close the terminal?')) {
-                window.location.href = '/index.html';
+                window.location.href = '/index.html?from=terminal';
             }
         }
         

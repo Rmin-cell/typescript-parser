@@ -166,6 +166,166 @@ const LoadingText = styled.div`
   }
 `;
 
+const TerminalBootContainer = styled(motion.div)`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  backdrop-filter: blur(10px);
+`;
+
+const TerminalBootWindow = styled.div`
+  width: 80%;
+  max-width: 800px;
+  height: 60%;
+  background: #0d1117;
+  border: 2px solid #30363d;
+  border-radius: 12px;
+  box-shadow: 0 0 30px rgba(88, 166, 255, 0.3);
+  overflow: hidden;
+  font-family: 'Fira Code', monospace;
+`;
+
+const TerminalHeader = styled.div`
+  background: #21262d;
+  padding: 12px 20px;
+  border-bottom: 1px solid #30363d;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+`;
+
+const TerminalButtons = styled.div`
+  display: flex;
+  gap: 8px;
+`;
+
+const TerminalButton = styled.div<{ color: string }>`
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: ${props => props.color};
+`;
+
+const TerminalTitle = styled.div`
+  color: #8b949e;
+  font-size: 14px;
+  margin-left: 20px;
+`;
+
+const TerminalBody = styled.div`
+  padding: 20px;
+  height: calc(100% - 60px);
+  overflow-y: auto;
+  background: #0d1117;
+`;
+
+const TerminalLine = styled(motion.div)`
+  color: #58a6ff;
+  margin-bottom: 8px;
+  font-size: 14px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+`;
+
+const TerminalPrompt = styled.span`
+  color: #4ec9b0;
+  font-weight: bold;
+`;
+
+const TerminalCommand = styled.span`
+  color: #f0f6fc;
+`;
+
+const TerminalOutput = styled.span<{ type: 'success' | 'info' | 'warning' | 'error' }>`
+  color: ${props => {
+    switch (props.type) {
+      case 'success': return '#4ec9b0';
+      case 'info': return '#58a6ff';
+      case 'warning': return '#ffcc02';
+      case 'error': return '#f85149';
+      default: return '#8b949e';
+    }
+  }};
+`;
+
+const TerminalCursor = styled.span`
+  color: #58a6ff;
+  animation: blink 1s infinite;
+  
+  @keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+  }
+`;
+
+const ProgressContainer = styled.div`
+  width: 100%;
+  height: 4px;
+  background: #21262d;
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 20px;
+`;
+
+const ProgressBar = styled(motion.div)`
+  height: 100%;
+  background: linear-gradient(90deg, #58a6ff, #7c3aed, #4ec9b0);
+  border-radius: 2px;
+  box-shadow: 0 0 10px rgba(88, 166, 255, 0.5);
+`;
+
+const LoadingSteps = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+`;
+
+const LoadingStep = styled(motion.div)<{ completed: boolean; active: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  background: ${props => props.active ? 'rgba(88, 166, 255, 0.1)' : 'rgba(33, 38, 45, 0.5)'};
+  border: 1px solid ${props => props.active ? '#58a6ff' : props.completed ? '#4ec9b0' : '#30363d'};
+  border-radius: 6px;
+  transition: all 0.3s ease;
+`;
+
+const StepIcon = styled.div<{ completed: boolean; active: boolean }>`
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: ${props => 
+    props.completed ? '#4ec9b0' : 
+    props.active ? '#58a6ff' : '#30363d'
+  };
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  box-shadow: ${props => props.active ? '0 0 8px rgba(88, 166, 255, 0.5)' : 'none'};
+`;
+
+const StepText = styled.span<{ completed: boolean; active: boolean }>`
+  color: ${props => 
+    props.completed ? '#4ec9b0' : 
+    props.active ? '#58a6ff' : '#8b949e'
+  };
+  font-weight: ${props => props.active ? '600' : '400'};
+  font-size: 13px;
+`;
+
 const AboutModalContent = styled.div`
   text-align: left;
   max-width: 600px;
@@ -230,6 +390,53 @@ const LandingPage: React.FC = () => {
   const [loadingMessage, setLoadingMessage] = useState('');
   const [isAboutModalVisible, setIsAboutModalVisible] = useState(false);
   const [floatingCodes, setFloatingCodes] = useState<FloatingCodeItem[]>([]);
+  
+  // Terminal boot sequence state
+  const [showTerminalBoot, setShowTerminalBoot] = useState(false);
+  const [terminalLines, setTerminalLines] = useState<string[]>([]);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [progress, setProgress] = useState(0);
+  const [isTyping, setIsTyping] = useState(false);
+  
+  // Return from terminal state
+  const [showReturnLoader, setShowReturnLoader] = useState(false);
+  const [returnSteps, setReturnSteps] = useState<string[]>([]);
+  const [returnProgress, setReturnProgress] = useState(0);
+
+  // Check if returning from terminal
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const fromTerminal = urlParams.get('from') === 'terminal';
+    
+    if (fromTerminal) {
+      setShowReturnLoader(true);
+      setReturnProgress(0);
+      
+      const returnSequence = [
+        'Saving terminal session...',
+        'Clearing compiler cache...',
+        'Preparing landing page...',
+        'Loading 3D animations...',
+        'Ready to continue...'
+      ];
+      
+      setReturnSteps(returnSequence);
+      
+      // Simulate return sequence
+      returnSequence.forEach((step, index) => {
+        setTimeout(() => {
+          setReturnProgress(((index + 1) / returnSequence.length) * 100);
+        }, index * 600);
+      });
+      
+      // Hide loader after sequence
+      setTimeout(() => {
+        setShowReturnLoader(false);
+        // Clean URL
+        window.history.replaceState({}, '', window.location.pathname);
+      }, returnSequence.length * 600 + 1000);
+    }
+  }, []);
 
   // Floating code animation with Framer Motion
   useEffect(() => {
@@ -308,10 +515,93 @@ const LandingPage: React.FC = () => {
 
   const handleLaunchTerminal = () => {
     setLoading(true);
-    setLoadingMessage('Launching terminal...');
-    setTimeout(() => {
-      window.location.href = '/terminal.html';
-    }, 1000);
+    setShowTerminalBoot(true);
+    setTerminalLines([]);
+    setCurrentStep(0);
+    setProgress(0);
+    
+    // Terminal boot sequence steps
+    const bootSteps = [
+      {
+        command: 'systemctl start compiler-service',
+        output: '✓ Compiler service started successfully',
+        type: 'success' as const,
+        delay: 800
+      },
+      {
+        command: 'export COMPILER_MODE=interactive',
+        output: '✓ Environment configured for interactive mode',
+        type: 'success' as const,
+        delay: 600
+      },
+      {
+        command: './compiler --init',
+        output: 'Initializing compiler modules...',
+        type: 'info' as const,
+        delay: 1000
+      },
+      {
+        command: 'lexer --version',
+        output: 'Lexical Analyzer v2.1.0 loaded',
+        type: 'info' as const,
+        delay: 700
+      },
+      {
+        command: 'parser --version',
+        output: 'Parser Engine v1.8.3 loaded',
+        type: 'info' as const,
+        delay: 700
+      },
+      {
+        command: 'codegen --version',
+        output: 'Code Generator v3.2.1 loaded',
+        type: 'info' as const,
+        delay: 700
+      },
+      {
+        command: 'terminal --start',
+        output: 'Terminal interface ready',
+        type: 'success' as const,
+        delay: 500
+      }
+    ];
+
+    let stepIndex = 0;
+    let totalDelay = 0;
+
+    const executeStep = (step: typeof bootSteps[0]) => {
+      setTimeout(() => {
+        // Add command line
+        setTerminalLines(prev => [...prev, `user@compiler:~$ ${step.command}`]);
+        setIsTyping(true);
+        
+        // Add output after typing delay
+        setTimeout(() => {
+          setTerminalLines(prev => [...prev, step.output]);
+          setIsTyping(false);
+          setCurrentStep(stepIndex);
+          setProgress(((stepIndex + 1) / bootSteps.length) * 100);
+          
+          stepIndex++;
+          if (stepIndex < bootSteps.length) {
+            executeStep(bootSteps[stepIndex]);
+          } else {
+            // Boot sequence complete
+            setTimeout(() => {
+              setTerminalLines(prev => [...prev, 'user@compiler:~$ Ready for commands...']);
+              setTimeout(() => {
+                window.location.href = '/terminal.html';
+              }, 1000);
+            }, 500);
+          }
+        }, step.delay);
+      }, totalDelay);
+      
+      totalDelay += step.delay + 200;
+    };
+
+    // Start the boot sequence
+    executeStep(bootSteps[0]);
   };
 
   const handleShowAbout = () => {
@@ -325,6 +615,181 @@ const LandingPage: React.FC = () => {
   return (
     <LandingContainer>
       <NeonCubeScene />
+      
+      {/* Terminal Boot Sequence */}
+      <AnimatePresence>
+        {showTerminalBoot && (
+          <TerminalBootContainer
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <TerminalBootWindow>
+              <TerminalHeader>
+                <TerminalButtons>
+                  <TerminalButton color="#f85149" />
+                  <TerminalButton color="#ffcc02" />
+                  <TerminalButton color="#4ec9b0" />
+                </TerminalButtons>
+                <TerminalTitle>Compiler Terminal - Boot Sequence</TerminalTitle>
+              </TerminalHeader>
+              
+              <TerminalBody>
+                {terminalLines.map((line, index) => (
+                  <TerminalLine
+                    key={index}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                  >
+                    {line.includes('user@compiler:~$') ? (
+                      <>
+                        <TerminalPrompt>user@compiler:~$</TerminalPrompt>
+                        <TerminalCommand>{line.replace('user@compiler:~$ ', '')}</TerminalCommand>
+                      </>
+                    ) : line.includes('✓') ? (
+                      <TerminalOutput type="success">{line}</TerminalOutput>
+                    ) : line.includes('Initializing') || line.includes('loaded') ? (
+                      <TerminalOutput type="info">{line}</TerminalOutput>
+                    ) : (
+                      <TerminalOutput type="info">{line}</TerminalOutput>
+                    )}
+                  </TerminalLine>
+                ))}
+                
+                {isTyping && (
+                  <TerminalLine>
+                    <TerminalCursor>█</TerminalCursor>
+                  </TerminalLine>
+                )}
+              </TerminalBody>
+              
+              <ProgressContainer>
+                <ProgressBar
+                  initial={{ width: 0 }}
+                  animate={{ width: `${progress}%` }}
+                  transition={{ duration: 0.5 }}
+                />
+              </ProgressContainer>
+              
+              <LoadingSteps>
+                {[
+                  'Starting compiler service',
+                  'Configuring environment',
+                  'Loading lexical analyzer',
+                  'Initializing parser engine',
+                  'Setting up code generator',
+                  'Preparing terminal interface'
+                ].map((step, index) => (
+                  <LoadingStep
+                    key={index}
+                    completed={index < currentStep}
+                    active={index === currentStep}
+                    initial={{ x: -20, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    transition={{ delay: index * 0.1 }}
+                  >
+                    <StepIcon 
+                      completed={index < currentStep} 
+                      active={index === currentStep}
+                    >
+                      {index < currentStep ? '✓' : index + 1}
+                    </StepIcon>
+                    <StepText 
+                      completed={index < currentStep} 
+                      active={index === currentStep}
+                    >
+                      {step}
+                    </StepText>
+                  </LoadingStep>
+                ))}
+              </LoadingSteps>
+            </TerminalBootWindow>
+          </TerminalBootContainer>
+        )}
+      </AnimatePresence>
+      
+      {/* Return from Terminal Loader */}
+      <AnimatePresence>
+        {showReturnLoader && (
+          <TerminalBootContainer
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <TerminalBootWindow>
+              <TerminalHeader>
+                <TerminalButtons>
+                  <TerminalButton color="#f85149" />
+                  <TerminalButton color="#ffcc02" />
+                  <TerminalButton color="#4ec9b0" />
+                </TerminalButtons>
+                <TerminalTitle>Returning to Landing Page</TerminalTitle>
+              </TerminalHeader>
+              
+              <TerminalBody>
+                <TerminalLine>
+                  <TerminalPrompt>user@compiler:~$</TerminalPrompt>
+                  <TerminalCommand>exit</TerminalCommand>
+                </TerminalLine>
+                <TerminalLine>
+                  <TerminalOutput type="success">✓ Terminal session saved</TerminalOutput>
+                </TerminalLine>
+                <TerminalLine>
+                  <TerminalPrompt>user@compiler:~$</TerminalPrompt>
+                  <TerminalCommand>home</TerminalCommand>
+                </TerminalLine>
+                <TerminalLine>
+                  <TerminalOutput type="info">🏠 Returning to landing page...</TerminalOutput>
+                </TerminalLine>
+                <TerminalLine>
+                  <TerminalOutput type="info">Loading 3D animations...</TerminalOutput>
+                </TerminalLine>
+                <TerminalLine>
+                  <TerminalOutput type="success">✓ Landing page ready</TerminalOutput>
+                </TerminalLine>
+              </TerminalBody>
+              
+              <ProgressContainer>
+                <ProgressBar
+                  initial={{ width: 0 }}
+                  animate={{ width: `${returnProgress}%` }}
+                  transition={{ duration: 0.5 }}
+                />
+              </ProgressContainer>
+              
+              <LoadingSteps>
+                {returnSteps.map((step, index) => (
+                  <LoadingStep
+                    key={index}
+                    completed={index < Math.floor((returnProgress / 100) * returnSteps.length)}
+                    active={index === Math.floor((returnProgress / 100) * returnSteps.length)}
+                    initial={{ x: -20, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    transition={{ delay: index * 0.1 }}
+                  >
+                    <StepIcon 
+                      completed={index < Math.floor((returnProgress / 100) * returnSteps.length)} 
+                      active={index === Math.floor((returnProgress / 100) * returnSteps.length)}
+                    >
+                      {index < Math.floor((returnProgress / 100) * returnSteps.length) ? '✓' : index + 1}
+                    </StepIcon>
+                    <StepText 
+                      completed={index < Math.floor((returnProgress / 100) * returnSteps.length)} 
+                      active={index === Math.floor((returnProgress / 100) * returnSteps.length)}
+                    >
+                      {step}
+                    </StepText>
+                  </LoadingStep>
+                ))}
+              </LoadingSteps>
+            </TerminalBootWindow>
+          </TerminalBootContainer>
+        )}
+      </AnimatePresence>
+      
       <BackgroundEffects>
         <AnimatePresence>
           {floatingCodes.map(code => (
