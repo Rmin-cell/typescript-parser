@@ -15,14 +15,14 @@ interface AnimatedSymbolTableProps {
 
 const Container = styled.div`
   padding: 16px;
-  background: #1e1e1e;
+  background: #1e293b;
   border-radius: 8px;
-  border: 1px solid #3c3c3c;
+  border: 1px solid #334155;
   min-height: 200px;
 `;
 
 const Title = styled.div`
-  color: #4ec9b0;
+  color: #3b82f6;
   font-weight: 600;
   margin-bottom: 16px;
   font-size: 14px;
@@ -38,15 +38,15 @@ const SymbolGrid = styled.div`
 const SymbolCard = styled(motion.div)<{ symbolType: string }>`
   background: ${props => {
     const type = props.symbolType.toLowerCase();
-    if (type.includes('variable')) return 'linear-gradient(135deg, #4ec9b0, #58a6ff)';
-    if (type.includes('function')) return 'linear-gradient(135deg, #58a6ff, #7c3aed)';
-    if (type.includes('parameter')) return 'linear-gradient(135deg, #ffcc02, #ff9500)';
-    if (type.includes('constant')) return 'linear-gradient(135deg, #f85149, #ff6b6b)';
-    return 'linear-gradient(135deg, #30363d, #21262d)';
+    if (type.includes('variable')) return 'linear-gradient(135deg, #10b981, #059669)';
+    if (type.includes('function')) return 'linear-gradient(135deg, #3b82f6, #1d4ed8)';
+    if (type.includes('parameter')) return 'linear-gradient(135deg, #f59e0b, #d97706)';
+    if (type.includes('constant')) return 'linear-gradient(135deg, #ef4444, #dc2626)';
+    return 'linear-gradient(135deg, #475569, #334155)';
   }};
   padding: 12px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid #334155;
   position: relative;
   overflow: hidden;
   
@@ -67,42 +67,49 @@ const SymbolCard = styled(motion.div)<{ symbolType: string }>`
 `;
 
 const SymbolName = styled.div`
-  color: #f0f6fc;
-  font-weight: 600;
+  color: #ffffff;
+  font-weight: 700;
   font-size: 14px;
   margin-bottom: 4px;
   font-family: 'Fira Code', 'JetBrains Mono', monospace;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 `;
 
 const SymbolType = styled.div`
-  color: #f0f6fc;
+  color: #ffffff;
   font-size: 12px;
+  font-weight: 600;
   margin-bottom: 4px;
-  opacity: 0.8;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 `;
 
 const SymbolScope = styled.div`
-  color: #8b949e;
+  color: #e2e8f0;
   font-size: 10px;
+  font-weight: 600;
   margin-bottom: 4px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 `;
 
 const SymbolValue = styled.div`
-  color: #4ec9b0;
+  color: #ffffff;
   font-size: 11px;
   font-family: 'Fira Code', 'JetBrains Mono', monospace;
-  background: rgba(78, 201, 176, 0.1);
+  font-weight: 600;
+  background: rgba(37, 99, 235, 0.3);
   padding: 4px 8px;
   border-radius: 4px;
   margin-top: 4px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 `;
 
 const ProgressBar = styled.div`
   width: 100%;
   height: 4px;
-  background: #30363d;
+  background: #334155;
   border-radius: 2px;
   overflow: hidden;
   margin-bottom: 16px;
@@ -110,7 +117,7 @@ const ProgressBar = styled.div`
 
 const ProgressFill = styled(motion.div)`
   height: 100%;
-  background: linear-gradient(90deg, #4ec9b0, #58a6ff);
+  background: linear-gradient(90deg, #3b82f6, #10b981);
   border-radius: 2px;
 `;
 
@@ -120,27 +127,27 @@ const StatsContainer = styled.div`
   align-items: center;
   margin-top: 16px;
   padding: 12px;
-  background: #252526;
+  background: #0f172a;
   border-radius: 6px;
-  border: 1px solid #3c3c3c;
+  border: 1px solid #334155;
 `;
 
 const StatItem = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  color: #f0f6fc;
+  color: #f8fafc;
 `;
 
 const StatValue = styled.div`
   font-size: 18px;
   font-weight: 600;
-  color: #4ec9b0;
+  color: #3b82f6;
 `;
 
 const StatLabel = styled.div`
   font-size: 11px;
-  color: #8b949e;
+  color: #94a3b8;
   margin-top: 2px;
 `;
 
@@ -216,7 +223,7 @@ const AnimatedSymbolTable: React.FC<AnimatedSymbolTableProps> = ({ symbolTable }
     return (
       <Container>
         <Title>📊 Symbol Table</Title>
-        <div style={{ color: '#8b949e', textAlign: 'center', padding: '20px' }}>
+        <div style={{ color: '#94a3b8', textAlign: 'center', padding: '20px' }}>
           No symbols found
         </div>
       </Container>

@@ -63,17 +63,20 @@ const ControlButton = styled(motion.button)<{ variant: 'primary' | 'secondary' |
       case 'primary':
         return `
           background: linear-gradient(135deg, #58a6ff, #7c3aed);
-          color: #f0f6fc;
+          color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
         `;
       case 'secondary':
         return `
           background: linear-gradient(135deg, #6e7681, #8b949e);
-          color: #f0f6fc;
+          color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
         `;
       case 'success':
         return `
           background: linear-gradient(135deg, #4ec9b0, #58a6ff);
-          color: #f0f6fc;
+          color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
         `;
     }
   }}
@@ -130,7 +133,8 @@ const LegendItem = styled.div`
   align-items: center;
   gap: 6px;
   font-size: 11px;
-  color: #f0f6fc;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 `;
 
 const ColorBox = styled.div<{ color: string }>`
@@ -168,7 +172,8 @@ const SummaryTitle = styled.div`
 
 const SummaryContent = styled.div`
   font-size: 11px;
-  color: #f0f6fc;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
   font-family: 'Fira Code', 'JetBrains Mono', monospace;
 `;
 
@@ -209,7 +214,8 @@ const StepItem = styled(motion.div)<{ isActive: boolean }>`
 
 const StepNumber = styled.div`
   font-weight: 600;
-  color: #f0f6fc;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
   margin-bottom: 2px;
 `;
 
@@ -233,7 +239,8 @@ const StatItem = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  color: #f0f6fc;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 `;
 
 const StatValue = styled.div`

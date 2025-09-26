@@ -17,14 +17,14 @@ interface AnimatedThreeAddressCodeProps {
 
 const Container = styled.div`
   padding: 16px;
-  background: #1e1e1e;
+  background: #1e293b;
   border-radius: 8px;
-  border: 1px solid #3c3c3c;
+  border: 1px solid #334155;
   min-height: 200px;
 `;
 
 const Title = styled.div`
-  color: #4ec9b0;
+  color: #3b82f6;
   font-weight: 600;
   margin-bottom: 16px;
   font-size: 14px;
@@ -40,16 +40,16 @@ const InstructionList = styled.div`
 const InstructionCard = styled(motion.div)<{ instructionType: string }>`
   background: ${props => {
     const type = props.instructionType.toLowerCase();
-    if (type.includes('assign')) return 'linear-gradient(135deg, #4ec9b0, #58a6ff)';
-    if (type.includes('arithmetic')) return 'linear-gradient(135deg, #58a6ff, #7c3aed)';
-    if (type.includes('jump')) return 'linear-gradient(135deg, #ffcc02, #ff9500)';
-    if (type.includes('label')) return 'linear-gradient(135deg, #f85149, #ff6b6b)';
-    if (type.includes('function')) return 'linear-gradient(135deg, #8b949e, #6e7681)';
-    return 'linear-gradient(135deg, #30363d, #21262d)';
+    if (type.includes('assign')) return 'linear-gradient(135deg, #10b981, #059669)';
+    if (type.includes('arithmetic')) return 'linear-gradient(135deg, #3b82f6, #1d4ed8)';
+    if (type.includes('jump')) return 'linear-gradient(135deg, #f59e0b, #d97706)';
+    if (type.includes('label')) return 'linear-gradient(135deg, #ef4444, #dc2626)';
+    if (type.includes('function')) return 'linear-gradient(135deg, #64748b, #475569)';
+    return 'linear-gradient(135deg, #475569, #334155)';
   }};
   padding: 12px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid #334155;
   position: relative;
   overflow: hidden;
   
@@ -77,27 +77,31 @@ const InstructionHeader = styled.div`
 `;
 
 const InstructionIndex = styled.div`
-  color: #8b949e;
+  color: #e2e8f0;
   font-size: 12px;
-  font-weight: 600;
-  background: rgba(139, 148, 158, 0.1);
+  font-weight: 700;
+  background: rgba(226, 232, 240, 0.2);
   padding: 4px 8px;
   border-radius: 4px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 `;
 
 const InstructionType = styled.div`
-  color: #f0f6fc;
+  color: #ffffff;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 `;
 
 const InstructionContent = styled.div`
-  color: #f0f6fc;
+  color: #ffffff;
   font-family: 'Fira Code', 'JetBrains Mono', monospace;
   font-size: 14px;
+  font-weight: 600;
   line-height: 1.4;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 `;
 
 const InstructionDetails = styled.div`
@@ -119,11 +123,11 @@ const DetailTag = styled.div<{ type: string }>`
   }};
   color: ${props => {
     switch (props.type) {
-      case 'op': return '#58a6ff';
-      case 'arg': return '#4ec9b0';
-      case 'result': return '#ffcc02';
-      case 'label': return '#f85149';
-      default: return '#8b949e';
+      case 'op': return '#3b82f6';
+      case 'arg': return '#10b981';
+      case 'result': return '#f59e0b';
+      case 'label': return '#ef4444';
+      default: return '#94a3b8';
     }
   }};
   padding: 2px 6px;

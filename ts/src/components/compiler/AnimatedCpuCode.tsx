@@ -19,14 +19,14 @@ interface AnimatedCpuCodeProps {
 
 const Container = styled.div`
   padding: 16px;
-  background: #1e1e1e;
+  background: #0f172a;
   border-radius: 8px;
-  border: 1px solid #3c3c3c;
+  border: 1px solid #475569;
   min-height: 200px;
 `;
 
 const Title = styled.div`
-  color: #4ec9b0;
+  color: #2563eb;
   font-weight: 600;
   margin-bottom: 16px;
   font-size: 14px;
@@ -42,13 +42,13 @@ const InstructionList = styled.div`
 const InstructionCard = styled(motion.div)<{ instructionType: string }>`
   background: ${props => {
     const type = props.instructionType.toLowerCase();
-    if (type.includes('load') || type.includes('store')) return 'linear-gradient(135deg, #4ec9b0, #58a6ff)';
-    if (type.includes('add') || type.includes('sub') || type.includes('mul') || type.includes('div')) return 'linear-gradient(135deg, #58a6ff, #7c3aed)';
-    if (type.includes('jmp') || type.includes('je') || type.includes('jne') || type.includes('jl') || type.includes('jg')) return 'linear-gradient(135deg, #ffcc02, #ff9500)';
-    if (type.includes('call') || type.includes('ret')) return 'linear-gradient(135deg, #f85149, #ff6b6b)';
-    if (type.includes('label') || type.includes('function')) return 'linear-gradient(135deg, #8b949e, #6e7681)';
-    if (type.includes('print')) return 'linear-gradient(135deg, #96ceb4, #4ecdc4)';
-    return 'linear-gradient(135deg, #30363d, #21262d)';
+    if (type.includes('load') || type.includes('store')) return 'linear-gradient(135deg, #2563eb, #1d4ed8)';
+    if (type.includes('add') || type.includes('sub') || type.includes('mul') || type.includes('div')) return 'linear-gradient(135deg, #059669, #047857)';
+    if (type.includes('jmp') || type.includes('je') || type.includes('jne') || type.includes('jl') || type.includes('jg')) return 'linear-gradient(135deg, #d97706, #b45309)';
+    if (type.includes('call') || type.includes('ret')) return 'linear-gradient(135deg, #dc2626, #b91c1c)';
+    if (type.includes('label') || type.includes('function')) return 'linear-gradient(135deg, #0891b2, #0e7490)';
+    if (type.includes('print')) return 'linear-gradient(135deg, #7c3aed, #6d28d9)';
+    return 'linear-gradient(135deg, #475569, #334155)';
   }};
   padding: 12px;
   border-radius: 8px;
@@ -80,28 +80,31 @@ const InstructionHeader = styled.div`
 `;
 
 const InstructionIndex = styled.div`
-  color: #8b949e;
+  color: #94a3b8;
   font-size: 12px;
   font-weight: 600;
-  background: rgba(139, 148, 158, 0.1);
+  background: rgba(148, 163, 184, 0.1);
   padding: 4px 8px;
   border-radius: 4px;
 `;
 
 const InstructionType = styled.div`
-  color: #f0f6fc;
+  color: #ffffff;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 `;
 
 const InstructionContent = styled.div`
-  color: #f0f6fc;
+  color: #ffffff;
   font-family: 'Fira Code', 'JetBrains Mono', monospace;
   font-size: 14px;
+  font-weight: 600;
   line-height: 1.4;
   margin-bottom: 8px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 `;
 
 const InstructionDetails = styled.div`
@@ -113,34 +116,36 @@ const InstructionDetails = styled.div`
 const DetailTag = styled.div<{ type: string }>`
   background: ${props => {
     switch (props.type) {
-      case 'register': return 'rgba(78, 201, 176, 0.2)';
-      case 'value': return 'rgba(88, 166, 255, 0.2)';
-      case 'address': return 'rgba(255, 204, 2, 0.2)';
-      case 'target': return 'rgba(248, 81, 73, 0.2)';
-      case 'operand': return 'rgba(139, 148, 158, 0.2)';
-      default: return 'rgba(139, 148, 158, 0.2)';
+      case 'register': return 'rgba(37, 99, 235, 0.3)';
+      case 'value': return 'rgba(5, 150, 105, 0.3)';
+      case 'address': return 'rgba(217, 119, 6, 0.3)';
+      case 'target': return 'rgba(220, 38, 38, 0.3)';
+      case 'operand': return 'rgba(148, 163, 184, 0.3)';
+      default: return 'rgba(148, 163, 184, 0.3)';
     }
   }};
   color: ${props => {
     switch (props.type) {
-      case 'register': return '#4ec9b0';
-      case 'value': return '#58a6ff';
-      case 'address': return '#ffcc02';
-      case 'target': return '#f85149';
-      case 'operand': return '#8b949e';
-      default: return '#8b949e';
+      case 'register': return '#ffffff';
+      case 'value': return '#ffffff';
+      case 'address': return '#ffffff';
+      case 'target': return '#ffffff';
+      case 'operand': return '#ffffff';
+      default: return '#ffffff';
     }
   }};
-  padding: 2px 6px;
+  padding: 3px 8px;
   border-radius: 4px;
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 `;
 
 const ProgressBar = styled.div`
   width: 100%;
   height: 4px;
-  background: #30363d;
+  background: #334155;
   border-radius: 2px;
   overflow: hidden;
   margin-bottom: 16px;
@@ -148,7 +153,7 @@ const ProgressBar = styled.div`
 
 const ProgressFill = styled(motion.div)`
   height: 100%;
-  background: linear-gradient(90deg, #4ec9b0, #58a6ff);
+  background: linear-gradient(90deg, #2563eb, #059669);
   border-radius: 2px;
 `;
 
@@ -158,27 +163,27 @@ const StatsContainer = styled.div`
   align-items: center;
   margin-top: 16px;
   padding: 12px;
-  background: #252526;
+  background: #1e293b;
   border-radius: 6px;
-  border: 1px solid #3c3c3c;
+  border: 1px solid #475569;
 `;
 
 const StatItem = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  color: #f0f6fc;
+  color: #f8fafc;
 `;
 
 const StatValue = styled.div`
   font-size: 16px;
   font-weight: 600;
-  color: #4ec9b0;
+  color: #2563eb;
 `;
 
 const StatLabel = styled.div`
   font-size: 10px;
-  color: #8b949e;
+  color: #94a3b8;
   margin-top: 2px;
 `;
 

@@ -64,19 +64,21 @@ const BlockNode = styled(motion.div)<{ isEntry: boolean; isExit: boolean }>`
 `;
 
 const BlockId = styled.div`
-  color: #f0f6fc;
-  font-weight: 600;
+  color: #ffffff;
+  font-weight: 700;
   font-size: 12px;
   margin-bottom: 4px;
   text-align: center;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 `;
 
 const BlockInstructions = styled.div`
-  color: #f0f6fc;
+  color: #ffffff;
   font-size: 10px;
   font-family: 'Fira Code', 'JetBrains Mono', monospace;
+  font-weight: 600;
   text-align: center;
-  opacity: 0.8;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 `;
 
 const Edge = styled(motion.line)`

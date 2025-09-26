@@ -191,6 +191,12 @@ const TerminalSection = styled.div`
   display: flex;
   flex-direction: column;
   min-width: 0;
+  cursor: text;
+  position: relative;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.02);
+  }
 `;
 
 const CompilerSection = styled.div`
@@ -323,7 +329,7 @@ const AdvancedTerminal: React.FC = () => {
     const contents = dir.contents;
     const items = Object.entries(contents).map(([name, info]) => {
       const icon = info.type === 'directory' ? '📁' : '📄';
-      const size = info.type === 'file' ? ` (${info.size})` : '';
+      const size = info.type === 'file' && 'size' in info ? ` (${info.size})` : '';
       return `${icon} ${name}${size}`;
     });
 
@@ -528,6 +534,20 @@ const AdvancedTerminal: React.FC = () => {
     }
   }, [lines]);
 
+  // Ensure terminal input remains focused when compiler is open
+  useEffect(() => {
+    if (inputRef.current && !showCompiler) {
+      inputRef.current.focus();
+    }
+  }, [showCompiler]);
+
+  // Focus terminal input when clicking on terminal section
+  const handleTerminalClick = () => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  };
+
   return (
     <TerminalContainer>
       <TerminalHeader>
@@ -538,7 +558,7 @@ const AdvancedTerminal: React.FC = () => {
       </TerminalHeader>
       
       <MainContainer>
-        <TerminalSection>
+        <TerminalSection onClick={handleTerminalClick}>
       <TerminalBody ref={terminalRef}>
         {lines.map((line, index) => (
           <TerminalLine key={line.id} type={line.type}>
@@ -554,8 +574,17 @@ const AdvancedTerminal: React.FC = () => {
         ))}
 
         <InputLine>
-              <Prompt>$</Prompt> <User>{username}</User>@<Directory>compiler-visualizer</Directory> {currentInput}
+          <Prompt>$</Prompt> <User>{username}</User>@<Directory>compiler-visualizer</Directory> {currentInput}
           <Cursor visible={showCursor && !isTyping}>█</Cursor>
+          {showCompiler && (
+            <div style={{ 
+              color: '#d97706', 
+              fontSize: '10px', 
+              marginLeft: '8px',
+              opacity: 0.7 
+            }}>
+            </div>
+          )}
         </InputLine>
 
         <HiddenInput
@@ -573,14 +602,14 @@ const AdvancedTerminal: React.FC = () => {
           <span>Online</span>
         </StatusItem>
         <StatusItem>
-          <StatusDot color="#58a6ff" />
-          <span>Ready</span>
+          <StatusDot color={showCompiler ? "#d97706" : "#58a6ff"} />
+          <span>{showCompiler ? "Compiler Mode" : "Ready"}</span>
         </StatusItem>
         <StatusItem>
           <span>Commands: {commandHistory.commands.length}</span>
         </StatusItem>
         <StatusItem>
-          <span>Press ↑/↓ for history</span>
+          <span>{showCompiler ? "Type 'exit' to close compiler" : "Press ↑/↓ for history"}</span>
         </StatusItem>
       </StatusBar>
         </TerminalSection>

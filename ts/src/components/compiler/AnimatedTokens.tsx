@@ -17,14 +17,14 @@ interface AnimatedTokensProps {
 
 const Container = styled.div`
   padding: 16px;
-  background: #1e1e1e;
+  background: #0f172a;
   border-radius: 8px;
-  border: 1px solid #3c3c3c;
+  border: 1px solid #475569;
   min-height: 200px;
 `;
 
 const Title = styled.div`
-  color: #4ec9b0;
+  color: #2563eb;
   font-weight: 600;
   margin-bottom: 16px;
   font-size: 14px;
@@ -40,16 +40,16 @@ const TokenGrid = styled.div`
 const TokenCard = styled(motion.div)<{ tokenType: string }>`
   background: ${props => {
     const type = props.tokenType.toLowerCase();
-    if (type.includes('keyword')) return 'linear-gradient(135deg, #58a6ff, #7c3aed)';
-    if (type.includes('identifier')) return 'linear-gradient(135deg, #4ec9b0, #58a6ff)';
-    if (type.includes('literal')) return 'linear-gradient(135deg, #ffcc02, #ff9500)';
-    if (type.includes('operator')) return 'linear-gradient(135deg, #f85149, #ff6b6b)';
-    if (type.includes('punctuation')) return 'linear-gradient(135deg, #8b949e, #6e7681)';
-    return 'linear-gradient(135deg, #30363d, #21262d)';
+    if (type.includes('keyword')) return 'linear-gradient(135deg, #2563eb, #1d4ed8)';
+    if (type.includes('identifier')) return 'linear-gradient(135deg, #059669, #047857)';
+    if (type.includes('literal')) return 'linear-gradient(135deg, #d97706, #b45309)';
+    if (type.includes('operator')) return 'linear-gradient(135deg, #dc2626, #b91c1c)';
+    if (type.includes('punctuation')) return 'linear-gradient(135deg, #0891b2, #0e7490)';
+    return 'linear-gradient(135deg, #475569, #334155)';
   }};
   padding: 12px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid #334155;
   position: relative;
   overflow: hidden;
   
@@ -70,33 +70,36 @@ const TokenCard = styled(motion.div)<{ tokenType: string }>`
 `;
 
 const TokenType = styled.div`
-  color: #f0f6fc;
-  font-weight: 600;
+  color: #ffffff;
+  font-weight: 700;
   font-size: 12px;
   margin-bottom: 4px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 `;
 
 const TokenValue = styled.div`
-  color: #f0f6fc;
+  color: #ffffff;
   font-family: 'Fira Code', 'JetBrains Mono', monospace;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   word-break: break-all;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 `;
 
 const TokenPosition = styled.div`
-  color: #8b949e;
+  color: #e2e8f0;
   font-size: 10px;
   margin-top: 4px;
-  opacity: 0.7;
+  font-weight: 500;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 `;
 
 const ProgressBar = styled.div`
   width: 100%;
   height: 4px;
-  background: #30363d;
+  background: #334155;
   border-radius: 2px;
   overflow: hidden;
   margin-bottom: 16px;
@@ -104,7 +107,7 @@ const ProgressBar = styled.div`
 
 const ProgressFill = styled(motion.div)`
   height: 100%;
-  background: linear-gradient(90deg, #4ec9b0, #58a6ff);
+  background: linear-gradient(90deg, #2563eb, #059669);
   border-radius: 2px;
 `;
 
@@ -114,27 +117,27 @@ const StatsContainer = styled.div`
   align-items: center;
   margin-top: 16px;
   padding: 12px;
-  background: #252526;
+  background: #0f172a;
   border-radius: 6px;
-  border: 1px solid #3c3c3c;
+  border: 1px solid #334155;
 `;
 
 const StatItem = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  color: #f0f6fc;
+  color: #f8fafc;
 `;
 
 const StatValue = styled.div`
   font-size: 18px;
   font-weight: 600;
-  color: #4ec9b0;
+  color: #2563eb;
 `;
 
 const StatLabel = styled.div`
   font-size: 11px;
-  color: #8b949e;
+  color: #94a3b8;
   margin-top: 2px;
 `;
 
@@ -204,7 +207,7 @@ const AnimatedTokens: React.FC<AnimatedTokensProps> = ({ tokens }) => {
     return (
       <Container>
         <Title>🔍 Tokens</Title>
-        <div style={{ color: '#8b949e', textAlign: 'center', padding: '20px' }}>
+        <div style={{ color: '#94a3b8', textAlign: 'center', padding: '20px' }}>
           No tokens generated
         </div>
       </Container>
