@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styled, { keyframes } from 'styled-components';
+import { useNavigate } from 'react-router-dom';
+import CompilerInterface from './CompilerInterface';
 
 interface Command {
   name: string;
@@ -70,60 +72,76 @@ const TerminalButton = styled.div<{ color: string; hoverColor: string }>`
 `;
 
 const TerminalTitle = styled.div`
-  color: #8b949e;
-  font-size: 13px;
-  margin-left: 20px;
-  font-weight: 500;
+  color: #f0f6fc;
+  font-weight: 600;
+  font-size: 14px;
+  margin-left: 8px;
 `;
 
 const TerminalBody = styled.div`
   flex: 1;
-  padding: 24px;
+  padding: 20px;
   overflow-y: auto;
-  background: 
-    radial-gradient(circle at 20% 20%, rgba(88, 166, 255, 0.05) 0%, transparent 50%),
-    radial-gradient(circle at 80% 80%, rgba(124, 58, 237, 0.05) 0%, transparent 50%);
+  background: transparent;
+  position: relative;
 `;
 
-const TerminalLine = styled.div<{ type: 'input' | 'output' | 'error' | 'system' }>`
-  margin-bottom: 12px;
-  color: ${props => {
-    switch (props.type) {
-      case 'input': return '#58a6ff';
-      case 'output': return '#f0f6fc';
-      case 'error': return '#f85149';
-      case 'system': return '#7c3aed';
-      default: return '#f0f6fc';
-    }
-  }};
-  white-space: pre-wrap;
-  word-wrap: break-word;
+const WelcomeMessage = styled.div`
+  color: #58a6ff;
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  text-align: center;
+`;
+
+const TerminalLine = styled.div<{ type: string }>`
+  margin-bottom: 8px;
   animation: ${fadeIn} 0.3s ease-out;
+  
+  ${props => props.type === 'input' && `
+    color: #f0f6fc;
+  `}
+  
+  ${props => props.type === 'output' && `
+    color: #8b949e;
+  `}
+  
+  ${props => props.type === 'error' && `
+    color: #f85149;
+  `}
+  
+  ${props => props.type === 'system' && `
+    color: #4ec9b0;
+  `}
 `;
 
 const Prompt = styled.span`
-  color: #7c3aed;
-  font-weight: bold;
-  margin-right: 8px;
+  color: #58a6ff;
+  font-weight: 600;
 `;
 
 const User = styled.span`
-  color: #58a6ff;
-  font-weight: bold;
-  margin-right: 4px;
+  color: #f0f6fc;
+  font-weight: 600;
 `;
 
 const Directory = styled.span`
-  color: #a5a5a5;
-  margin-right: 8px;
+  color: #4ec9b0;
+  font-weight: 600;
+`;
+
+const InputLine = styled.div`
+  display: flex;
+  align-items: center;
+  margin-top: 8px;
 `;
 
 const Cursor = styled.span<{ visible: boolean }>`
-  background: #58a6ff;
-  color: #0d1117;
-  opacity: ${props => props.visible ? 1 : 0};
-  animation: blink 1s infinite;
-  margin-left: 2px;
+  display: inline-block;
+  width: 8px;
+  height: 16px;
+  background: ${props => props.visible ? '#f0f6fc' : 'transparent'};
+  animation: ${props => props.visible ? 'blink 1s infinite' : 'none'};
   
   @keyframes blink {
     0%, 50% { opacity: 1; }
@@ -131,81 +149,20 @@ const Cursor = styled.span<{ visible: boolean }>`
   }
 `;
 
-const InputLine = styled.div`
-  display: flex;
-  align-items: center;
-  margin-bottom: 12px;
-  position: relative;
-`;
-
 const HiddenInput = styled.input`
   position: absolute;
   left: -9999px;
   opacity: 0;
-`;
-
-const WelcomeMessage = styled.div`
-  color: #7c3aed;
-  font-size: 18px;
-  margin-bottom: 24px;
-  text-align: center;
-  border: 2px solid #30363d;
-  padding: 24px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, rgba(88, 166, 255, 0.1) 0%, rgba(124, 58, 237, 0.1) 100%);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-  animation: ${fadeIn} 0.6s ease-out;
-`;
-
-const HelpSection = styled.div`
-  margin: 24px 0;
-  padding: 20px;
-  background: linear-gradient(135deg, rgba(88, 166, 255, 0.08) 0%, rgba(124, 58, 237, 0.08) 100%);
-  border: 1px solid #30363d;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-`;
-
-const CommandItem = styled.div`
-  margin: 12px 0;
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  padding: 8px 12px;
-  border-radius: 8px;
-  transition: background-color 0.2s ease;
-  
-  &:hover {
-    background: rgba(88, 166, 255, 0.1);
-  }
-`;
-
-const CommandName = styled.span`
-  color: #58a6ff;
-  font-weight: bold;
-  min-width: 120px;
-  font-size: 15px;
-`;
-
-const CommandDescription = styled.span`
-  color: #f0f6fc;
-  flex: 1;
-  font-size: 14px;
-`;
-
-const CommandUsage = styled.span`
-  color: #8b949e;
-  font-size: 12px;
-  font-family: 'Courier New', monospace;
+  pointer-events: none;
 `;
 
 const StatusBar = styled.div`
-  background: #21262d;
+  background: linear-gradient(90deg, #21262d 0%, #30363d 100%);
   padding: 8px 20px;
   border-top: 1px solid #30363d;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 20px;
   font-size: 12px;
   color: #8b949e;
 `;
@@ -223,7 +180,30 @@ const StatusDot = styled.div<{ color: string }>`
   background: ${props => props.color};
 `;
 
+const MainContainer = styled.div`
+  display: flex;
+  height: calc(100vh - 40px);
+  width: 100%;
+`;
+
+const TerminalSection = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+`;
+
+const CompilerSection = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border-left: 1px solid #30363d;
+`;
+
 const AdvancedTerminal: React.FC = () => {
+  console.log('AdvancedTerminal component rendering...');
+  const navigate = useNavigate();
   const [lines, setLines] = useState<TerminalLine[]>([]);
   const [currentInput, setCurrentInput] = useState('');
   const [showCursor, setShowCursor] = useState(true);
@@ -232,106 +212,11 @@ const AdvancedTerminal: React.FC = () => {
     commands: [],
     currentIndex: -1
   });
+  const [showCompiler, setShowCompiler] = useState(false);
+  const [username, setUsername] = useState('user');
+  const [currentDirectory, setCurrentDirectory] = useState('/home/user/compiler-visualizer');
   const inputRef = useRef<HTMLInputElement>(null);
   const terminalRef = useRef<HTMLDivElement>(null);
-
-  const commands: Command[] = [
-    {
-      name: 'help',
-      description: 'Show available commands and their usage',
-      usage: 'help [command]',
-      aliases: ['h', '?'],
-      action: () => showHelp()
-    },
-    {
-      name: 'calc',
-      description: 'Calculator mode - Evaluate mathematical expressions',
-      usage: 'calc',
-      aliases: ['calculator', 'math'],
-      action: () => navigateToMode('calc')
-    },
-    {
-      name: 'simple',
-      description: 'Simple parser mode - Parse basic data types (strings, numbers, booleans)',
-      usage: 'simple',
-      aliases: ['parse', 'basic'],
-      action: () => navigateToMode('simple')
-    },
-    {
-      name: 'compiler',
-      description: 'Full compiler mode - Complete compilation pipeline with all features',
-      usage: 'compiler',
-      aliases: ['compile', 'full'],
-      action: () => navigateToMode('compiler')
-    },
-    {
-      name: 'clear',
-      description: 'Clear terminal screen',
-      usage: 'clear',
-      aliases: ['cls', 'reset'],
-      action: () => clearTerminal()
-    },
-    {
-      name: 'about',
-      description: 'Show detailed project information and features',
-      usage: 'about',
-      aliases: ['info', 'version'],
-      action: () => showAbout()
-    },
-    {
-      name: 'history',
-      description: 'Show command history',
-      usage: 'history',
-      aliases: ['hist'],
-      action: () => showHistory()
-    },
-    {
-      name: 'exit',
-      description: 'Exit the terminal (same as closing the tab)',
-      usage: 'exit',
-      aliases: ['quit', 'q'],
-      action: () => exitTerminal()
-    }
-  ];
-
-  useEffect(() => {
-    // Focus input on mount
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
-
-    // Show welcome message with typing effect
-    setTimeout(() => {
-      typeText('system', '🚀 Compiler Visualizer Terminal v1.0.0');
-      typeText('system', 'Interactive Compiler Development Environment');
-      typeText('system', '');
-      typeText('output', 'Welcome! Type "help" to see available commands.');
-      typeText('output', 'Use ↑/↓ arrows to navigate command history.');
-      typeText('output', '');
-    }, 800);
-
-    // Cursor blinking effect
-    const cursorInterval = setInterval(() => {
-      setShowCursor(prev => !prev);
-    }, 500);
-
-    return () => clearInterval(cursorInterval);
-  }, []);
-
-  const typeText = (type: 'input' | 'output' | 'error' | 'system', text: string, delay: number = 50) => {
-    setIsTyping(true);
-    let index = 0;
-    const interval = setInterval(() => {
-      if (index < text.length) {
-        const currentText = text.substring(0, index + 1);
-        addLine(type, currentText, true);
-        index++;
-      } else {
-        clearInterval(interval);
-        setIsTyping(false);
-      }
-    }, delay);
-  };
 
   const addLine = (type: 'input' | 'output' | 'error' | 'system', content: string, replace: boolean = false) => {
     const newLine: TerminalLine = {
@@ -359,123 +244,275 @@ const AdvancedTerminal: React.FC = () => {
   const showHelp = () => {
     addLine('output', '📚 Available Commands:');
     addLine('output', '');
-    
-    commands.forEach(cmd => {
-      addLine('output', `  ${cmd.name.padEnd(12)} - ${cmd.description}`);
-      addLine('output', `  ${' '.repeat(12)} Usage: ${cmd.usage}`);
-      if (cmd.aliases && cmd.aliases.length > 0) {
-        addLine('output', `  ${' '.repeat(12)} Aliases: ${cmd.aliases.join(', ')}`);
-      }
-      addLine('output', '');
-    });
-  };
-
-  const showAbout = () => {
-    addLine('output', '🔧 Compiler Visualizer v1.0.0');
-    addLine('output', 'A comprehensive educational compiler implementation');
-    addLine('output', 'Built with TypeScript, React, and modern web technologies');
+    addLine('output', '• help - Show this help message');
+    addLine('output', '• clear - Clear the terminal');
+    addLine('output', '• compiler - Enter compiler mode');
+    addLine('output', '• exit - Exit compiler mode');
+    addLine('output', '• ls - List directory contents');
+    addLine('output', '• pwd - Print working directory');
+    addLine('output', '• whoami - Show current user');
+    addLine('output', '• date - Show current date and time');
+    addLine('output', '• uptime - Show system uptime');
+    addLine('output', '• rename - Change username');
+    addLine('output', '• home - Return to landing page');
     addLine('output', '');
-    addLine('output', '✨ Features:');
-    addLine('output', '  • Lexical Analysis (Tokenization)');
-    addLine('output', '  • Syntax Analysis (Parsing)');
-    addLine('output', '  • Abstract Syntax Tree (AST) Visualization');
-    addLine('output', '  • Intermediate Code Generation');
-    addLine('output', '  • Control Flow Graph (CFG)');
-    addLine('output', '  • Register Allocation with Graph Coloring');
-    addLine('output', '  • CPU Code Generation');
-    addLine('output', '  • Symbol Table Management');
-    addLine('output', '  • Interactive Web Interface');
-    addLine('output', '');
-    addLine('output', '🎯 Modes:');
-    addLine('output', '  • Calculator: Mathematical expression evaluation');
-    addLine('output', '  • Simple: Basic data type parsing');
-    addLine('output', '  • Compiler: Full compilation pipeline');
-    addLine('output', '');
-  };
-
-  const showHistory = () => {
-    if (commandHistory.commands.length === 0) {
-      addLine('output', 'No commands in history.');
-      return;
-    }
-    
-    addLine('output', '📜 Command History:');
-    commandHistory.commands.forEach((cmd, index) => {
-      addLine('output', `  ${index + 1}. ${cmd}`);
-    });
-    addLine('output', '');
-  };
-
-  const exitTerminal = () => {
-    addLine('system', 'Goodbye! 👋');
-    setTimeout(() => {
-      window.close();
-    }, 1000);
   };
 
   const navigateToMode = (mode: string) => {
     addLine('output', `🚀 Starting ${mode} mode...`);
-    addLine('output', 'Redirecting to compiler interface...');
+    addLine('output', 'Loading compiler modules...');
     
-    // Store the selected mode and redirect
-    localStorage.setItem('selectedMode', mode);
-    setTimeout(() => {
-      window.location.href = '/index.html';
-    }, 1500);
+    if (mode === 'compiler') {
+      setTimeout(() => {
+        addLine('output', '✅ Compiler interface loaded successfully!');
+        addLine('output', 'Switching to compiler mode...');
+        setTimeout(() => {
+          setShowCompiler(true);
+        }, 1000);
+      }, 1000);
+    } else {
+      setTimeout(() => {
+        addLine('output', '⚠️  This mode is not available in React terminal yet');
+        addLine('output', 'Use "compiler" for full compiler functionality');
+      }, 1000);
+    }
   };
 
-  const handleCommand = (input: string) => {
-    const trimmedInput = input.trim();
+  const handleBackToTerminal = () => {
+    setShowCompiler(false);
+    addLine('output', 'Returned to terminal mode');
+  };
+
+  // File system simulation
+  const fileSystem = {
+    '/home/user/compiler-visualizer': {
+      type: 'directory',
+      contents: {
+        'src': { type: 'directory' },
+        'dist': { type: 'directory' },
+        'node_modules': { type: 'directory' },
+        'package.json': { type: 'file', size: '2.1KB' },
+        'tsconfig.json': { type: 'file', size: '1.2KB' },
+        'vite.config.ts': { type: 'file', size: '0.8KB' },
+        'README.md': { type: 'file', size: '15.3KB' },
+        'index.html': { type: 'file', size: '1.0KB' }
+      }
+    },
+    '/home/user/compiler-visualizer/src': {
+      type: 'directory',
+      contents: {
+        'components': { type: 'directory' },
+        'compiler': { type: 'directory' },
+        'calc': { type: 'directory' },
+        'simple': { type: 'directory' },
+        'App.tsx': { type: 'file', size: '0.5KB' },
+        'main.tsx': { type: 'file', size: '0.3KB' }
+      }
+    }
+  };
+
+  const listFiles = () => {
+    const currentPath = currentDirectory;
+    const dir = fileSystem[currentPath as keyof typeof fileSystem];
     
-    if (!trimmedInput) {
-      addLine('input', '');
+    if (!dir || dir.type !== 'directory') {
+      addLine('error', `ls: cannot access '${currentPath}': No such file or directory`);
+      return;
+    }
+    
+    const contents = dir.contents;
+    const items = Object.entries(contents).map(([name, info]) => {
+      const icon = info.type === 'directory' ? '📁' : '📄';
+      const size = info.type === 'file' ? ` (${info.size})` : '';
+      return `${icon} ${name}${size}`;
+    });
+
+    addLine('output', items.join('\n'));
+  };
+
+  const printWorkingDirectory = () => {
+    addLine('output', currentDirectory);
+  };
+
+  const whoAmI = () => {
+    addLine('output', username);
+  };
+
+  const showDate = () => {
+    const now = new Date();
+    const dateString = now.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+    const timeString = now.toLocaleTimeString('en-US', {
+      hour12: false,
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+    addLine('output', `${dateString} ${timeString}`);
+  };
+
+  const showUptime = () => {
+    const uptime = Math.floor(Date.now() / 1000) - Math.floor(Date.now() / 1000) % 3600; // Simulate uptime
+    const hours = Math.floor(uptime / 3600);
+    const minutes = Math.floor((uptime % 3600) / 60);
+    const seconds = uptime % 60;
+    
+    addLine('output', `up ${hours}h ${minutes}m ${seconds}s`);
+    addLine('output', `load average: 0.15, 0.08, 0.05`);
+  };
+
+  const renameUser = (newName?: string) => {
+    if (!newName) {
+      addLine('output', 'Usage: rename <new-username>');
+      addLine('output', 'Example: rename john');
       return;
     }
 
-    // Add to history
-    setCommandHistory(prev => ({
-      commands: [...prev.commands, trimmedInput],
-      currentIndex: prev.commands.length
-    }));
-
-    // Add input line
-    addLine('input', `$ ${trimmedInput}`);
-
-    // Find and execute command
-    const command = commands.find(cmd => 
-      cmd.name === trimmedInput || 
-      (cmd.aliases && cmd.aliases.includes(trimmedInput))
-    );
-    
-    if (command) {
-      command.action();
-    } else {
-      addLine('error', `❌ Command not found: ${trimmedInput}`);
-      addLine('output', 'Type "help" to see available commands.');
-    }
-
-    setCurrentInput('');
+    const oldName = username;
+    setUsername(newName);
+    addLine('output', `Username changed from '${oldName}' to '${newName}'`);
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleCommand(currentInput);
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      if (commandHistory.currentIndex > 0) {
-        const newIndex = commandHistory.currentIndex - 1;
-        setCommandHistory(prev => ({ ...prev, currentIndex: newIndex }));
-        setCurrentInput(commandHistory.commands[newIndex]);
+  const goHome = () => {
+    addLine('output', '🏠 Returning to home page...');
+    addLine('output', 'Saving terminal session...');
+    addLine('output', 'Navigating to home page...');
+    
+    // Simple delay then navigate to trigger landing page return loader
+    setTimeout(() => {
+      navigate('/?from=terminal');
+    }, 1500);
+  };
+
+  const commands: Command[] = [
+    {
+      name: 'help',
+      description: 'Show available commands and their usage',
+      usage: 'help [command]',
+      aliases: ['h', '?'],
+      action: () => showHelp()
+    },
+    {
+      name: 'clear',
+      description: 'Clear the terminal screen',
+      usage: 'clear',
+      aliases: ['cls', 'c'],
+      action: () => clearTerminal()
+    },
+    {
+      name: 'compiler',
+      description: 'Enter compiler mode with full functionality',
+      usage: 'compiler',
+      aliases: ['comp', 'c'],
+      action: () => navigateToMode('compiler')
+    },
+    {
+      name: 'exit',
+      description: 'Exit compiler mode and return to terminal',
+      usage: 'exit',
+      action: () => {
+        setShowCompiler(false);
+        addLine('output', 'Exited compiler mode');
       }
-    } else if (e.key === 'ArrowDown') {
+    },
+    {
+      name: 'ls',
+      description: 'List directory contents',
+      usage: 'ls',
+      aliases: ['list', 'dir'],
+      action: () => listFiles()
+    },
+    {
+      name: 'pwd',
+      description: 'Print working directory',
+      usage: 'pwd',
+      action: () => printWorkingDirectory()
+    },
+    {
+      name: 'whoami',
+      description: 'Show current user',
+      usage: 'whoami',
+      action: () => whoAmI()
+    },
+    {
+      name: 'date',
+      description: 'Show current date and time',
+      usage: 'date',
+      action: () => showDate()
+    },
+    {
+      name: 'uptime',
+      description: 'Show system uptime',
+      usage: 'uptime',
+      action: () => showUptime()
+    },
+    {
+      name: 'rename',
+      description: 'Change username',
+      usage: 'rename <new-username>',
+      action: () => renameUser()
+    },
+    {
+      name: 'home',
+      description: 'Return to landing page',
+      usage: 'home',
+      aliases: ['exit', 'quit'],
+      action: () => goHome()
+    }
+  ];
+
+  const executeCommand = (command: string) => {
+    const trimmedCommand = command.trim();
+    if (!trimmedCommand) return;
+
+    addLine('input', trimmedCommand);
+    
+    // Add to command history
+    setCommandHistory(prev => ({
+      commands: [...prev.commands, trimmedCommand],
+      currentIndex: -1
+    }));
+
+    const [cmd, ...args] = trimmedCommand.split(' ');
+    const foundCommand = commands.find(c => 
+      c.name === cmd || (c.aliases && c.aliases.includes(cmd))
+    );
+
+    if (foundCommand) {
+      if (cmd === 'rename') {
+        renameUser(args[0]);
+      } else {
+        foundCommand.action();
+      }
+    } else {
+      addLine('error', `Command not found: ${cmd}. Type 'help' for available commands.`);
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      executeCommand(currentInput);
+      setCurrentInput('');
+    } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       if (commandHistory.currentIndex < commandHistory.commands.length - 1) {
         const newIndex = commandHistory.currentIndex + 1;
         setCommandHistory(prev => ({ ...prev, currentIndex: newIndex }));
-        setCurrentInput(commandHistory.commands[newIndex]);
+        setCurrentInput(commandHistory.commands[commandHistory.commands.length - 1 - newIndex]);
+      }
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (commandHistory.currentIndex > 0) {
+        const newIndex = commandHistory.currentIndex - 1;
+        setCommandHistory(prev => ({ ...prev, currentIndex: newIndex }));
+        setCurrentInput(commandHistory.commands[commandHistory.commands.length - 1 - newIndex]);
       } else {
         setCurrentInput('');
-        setCommandHistory(prev => ({ ...prev, currentIndex: commandHistory.commands.length }));
+        setCommandHistory(prev => ({ ...prev, currentIndex: -1 }));
       }
     }
   };
@@ -500,6 +537,8 @@ const AdvancedTerminal: React.FC = () => {
         <TerminalTitle>Compiler Visualizer Terminal</TerminalTitle>
       </TerminalHeader>
       
+      <MainContainer>
+        <TerminalSection>
       <TerminalBody ref={terminalRef}>
         <WelcomeMessage>
           🚀 Compiler Visualizer Terminal
@@ -513,7 +552,7 @@ const AdvancedTerminal: React.FC = () => {
           <TerminalLine key={line.id} type={line.type}>
             {line.type === 'input' && (
               <>
-                <Prompt>$</Prompt> <User>user</User>@<Directory>compiler-visualizer</Directory> {line.content}
+                    <Prompt>$</Prompt> <User>{username}</User>@<Directory>compiler-visualizer</Directory> {line.content}
               </>
             )}
             {line.type === 'output' && line.content}
@@ -523,7 +562,7 @@ const AdvancedTerminal: React.FC = () => {
         ))}
 
         <InputLine>
-          <Prompt>$</Prompt> <User>user</User>@<Directory>compiler-visualizer</Directory> {currentInput}
+              <Prompt>$</Prompt> <User>{username}</User>@<Directory>compiler-visualizer</Directory> {currentInput}
           <Cursor visible={showCursor && !isTyping}>█</Cursor>
         </InputLine>
 
@@ -552,9 +591,16 @@ const AdvancedTerminal: React.FC = () => {
           <span>Press ↑/↓ for history</span>
         </StatusItem>
       </StatusBar>
+        </TerminalSection>
+
+        {showCompiler && (
+          <CompilerSection>
+            <CompilerInterface onBack={handleBackToTerminal} />
+          </CompilerSection>
+        )}
+      </MainContainer>
     </TerminalContainer>
   );
 };
 
 export default AdvancedTerminal;
-

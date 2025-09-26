@@ -3,6 +3,7 @@ import { Button, Modal, Typography, Space } from 'antd';
 import { CodeOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import styled from 'styled-components';
+import { useNavigate } from 'react-router-dom';
 import NeonCubeScene from './NeonCubeScene';
 
 const { Title, Text } = Typography;
@@ -386,6 +387,7 @@ interface FloatingCodeItem {
 }
 
 const LandingPage: React.FC = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('');
   const [isAboutModalVisible, setIsAboutModalVisible] = useState(false);
@@ -590,7 +592,14 @@ const LandingPage: React.FC = () => {
             setTimeout(() => {
               setTerminalLines(prev => [...prev, 'user@compiler:~$ Ready for commands...']);
               setTimeout(() => {
-                window.location.href = '/terminal.html';
+                console.log('Navigating to terminal...');
+                try {
+                  navigate('/terminal');
+                } catch (error) {
+                  console.error('Navigation error:', error);
+                  // Fallback to window.location
+                  window.location.href = '/terminal';
+                }
               }, 1000);
             }, 500);
           }

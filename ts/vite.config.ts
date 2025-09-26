@@ -10,16 +10,14 @@ export default defineConfig({
   esbuild: {
     jsx: "automatic",
   },
-  // Configure multiple entry points
+  // Single React app entry point
   build: {
     outDir: "dist",
     sourcemap: true,
     rollupOptions: {
       input: {
         main: "index.html",
-        terminal: "terminal.html",
-        landing: "landing.html"
-      }
-    }
-  }
+      },
+    },
+  },
 });
