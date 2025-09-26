@@ -1,5 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
+import AnimatedTokens from './compiler/AnimatedTokens';
+import AnimatedSymbolTable from './compiler/AnimatedSymbolTable';
+import AnimatedThreeAddressCode from './compiler/AnimatedThreeAddressCode';
+import AnimatedCFG from './compiler/AnimatedCFG';
+import AnimatedRegisterAllocation from './compiler/AnimatedRegisterAllocation';
 
 interface CompilerInterfaceProps {
   onBack: () => void;
@@ -14,7 +19,7 @@ interface CompilerState {
   cfg: any;
   registerAllocation: any;
   errors: string[];
-  isRunning: boolean;
+  executionOutput: string;
 }
 
 const CompilerContainer = styled.div`
@@ -330,12 +335,9 @@ const CompilerInterface: React.FC<CompilerInterfaceProps> = ({ onBack }) => {
     cfg: null,
     registerAllocation: null,
     errors: [],
-    isRunning: false
+    executionOutput: ''
   });
 
-  const [showInstallation, setShowInstallation] = useState(false);
-  const [installationProgress, setInstallationProgress] = useState(0);
-  const [installationStep, setInstallationStep] = useState(0);
   const editorRef = useRef<any>(null);
 
   const handleCodeChange = (editor: any, data: any, value: string) => {
@@ -352,60 +354,32 @@ const CompilerInterface: React.FC<CompilerInterfaceProps> = ({ onBack }) => {
     }
   }, []);
 
-  // Show installation simulation
-  useEffect(() => {
-    if (showInstallation) {
-      const installationSteps = [
-        { command: 'npm install @compiler/core', output: 'Installing core compiler modules...', duration: 1200 },
-        { command: 'npm install @compiler/lexer', output: 'Installing lexical analyzer...', duration: 1000 },
-        { command: 'npm install @compiler/parser', output: 'Installing parser engine...', duration: 1100 },
-        { command: 'npm install @compiler/codegen', output: 'Installing code generator...', duration: 1000 },
-        { command: 'npm install @compiler/visualizer', output: 'Installing visualization tools...', duration: 1300 },
-        { command: 'compiler --init', output: 'Initializing compiler configuration...', duration: 800 }
-      ];
-
-      let stepIndex = 0;
-      let totalDelay = 0;
-
-      const executeStep = (step: typeof installationSteps[0]) => {
-        setTimeout(() => {
-          setInstallationStep(stepIndex);
-          setInstallationProgress(((stepIndex + 1) / installationSteps.length) * 100);
-          stepIndex++;
-          if (stepIndex < installationSteps.length) {
-            executeStep(installationSteps[stepIndex]);
-          } else {
-            setTimeout(() => {
-              setShowInstallation(false);
-            }, 1000);
-          }
-        }, totalDelay);
-        totalDelay += step.duration;
-      };
-
-      executeStep(installationSteps[0]);
-    }
-  }, [showInstallation]);
 
   const handleRunCode = async () => {
-    setState(prev => ({ ...prev, isRunning: true, errors: [] }));
-    
-    // Show installation simulation first
-    setShowInstallation(true);
+    setState(prev => ({ ...prev, errors: [] }));
     
     try {
       // Import real compiler modules
       const { parseProgram } = await import('../compiler/parser');
+      const { compilerLexer } = await import('../compiler/lexer');
       const { SymbolTable } = await import('../compiler/symbol-table');
       const { IntermediateCodeGenerator } = await import('../compiler/intermediate-code');
       const { CpuCodeGenerator } = await import('../compiler/cpu-code-gen');
       const { CFGGenerator } = await import('../compiler/cfg-generator');
       const { RegisterAllocator } = await import('../compiler/register-allocator');
+      const { interpretCompilerCode } = await import('../compiler/interpreter');
+
+      // Tokenize the code
+      const lexResult = compilerLexer.tokenize(state.code);
+      if (lexResult.errors.length > 0) {
+        setState(prev => ({ ...prev, errors: lexResult.errors }));
+        return;
+      }
 
       // Parse the code
       const parseResult = parseProgram(state.code);
       if (parseResult.errors.length > 0) {
-        setState(prev => ({ ...prev, errors: parseResult.errors, isRunning: false }));
+        setState(prev => ({ ...prev, errors: parseResult.errors }));
         return;
       }
 
@@ -426,22 +400,32 @@ const CompilerInterface: React.FC<CompilerInterfaceProps> = ({ onBack }) => {
       const regAlloc = new RegisterAllocator(cfg, threeAddressCode);
       const registerAllocation = regAlloc.allocate();
 
+      // Execute the code to get actual output
+      const executionOutput = interpretCompilerCode(state.code);
+
       setState(prev => ({
         ...prev,
+        tokens: lexResult.tokens,
         symbolTable: symTable,
         threeAddressCode,
         cpuCode,
         cfg,
         registerAllocation,
-        isRunning: false
+        executionOutput
       }));
     } catch (error) {
       setState(prev => ({
         ...prev,
-        errors: [`Compiler error: ${error}`],
-        isRunning: false
+        errors: [`Compiler error: ${error}`]
       }));
     }
+  };
+
+  const formatTokens = (tokens: any[]) => {
+    if (!tokens || tokens.length === 0) return 'No tokens generated';
+    return tokens.map((token, index) => 
+      `${(index + 1).toString().padStart(2)}. ${token.tokenType.name.padEnd(15)} | "${token.image}"`
+    ).join('\n');
   };
 
   const formatSymbolTable = (symTable: any) => {
@@ -529,39 +513,58 @@ const CompilerInterface: React.FC<CompilerInterfaceProps> = ({ onBack }) => {
               />
             </CodeEditorWrapper>
           </CodeEditorContainer>
-          <RunButton onClick={handleRunCode} disabled={state.isRunning}>
-            {state.isRunning ? '⏳ Running...' : '▶ Run Code'}
+          <RunButton onClick={handleRunCode}>
+            ▶ Run Code
           </RunButton>
         </CodeSection>
 
-        {/* Installation Simulation */}
-        {showInstallation && (
-          <CodeSection>
-            <div style={{ color: '#4ec9b0', fontWeight: 600, marginBottom: '8px' }}>🔧 Compiler Installation</div>
-            <div style={{ background: '#1e1e1e', padding: '16px', borderRadius: '6px', marginBottom: '16px' }}>
-              <div style={{ color: '#f0f6fc', marginBottom: '8px' }}>Installing compiler modules...</div>
-              <div style={{ background: '#252526', height: '8px', borderRadius: '4px', overflow: 'hidden' }}>
-                <div 
-                  style={{ 
-                    background: 'linear-gradient(90deg, #4ec9b0, #58a6ff)', 
-                    height: '100%', 
-                    width: `${installationProgress}%`,
-                    transition: 'width 0.3s ease'
-                  }} 
-                />
-              </div>
-              <div style={{ color: '#8b949e', fontSize: '12px', marginTop: '8px' }}>
-                Step {installationStep + 1} of 6 - {Math.round(installationProgress)}% complete
-              </div>
-            </div>
-          </CodeSection>
-        )}
 
         {/* Results Section */}
         <ResultsSection>
           <div style={{ color: '#4ec9b0', fontWeight: 600, marginBottom: '8px' }}>Results</div>
           <ResultOutput>
-            {state.isRunning ? 'Running compiler...' : 'Results will appear here...'}
+            {state.errors.length > 0 ? (
+              <div style={{ color: '#f85149' }}>
+                ❌ Compilation failed with {state.errors.length} error(s). Check the details below.
+              </div>
+            ) : state.symbolTable ? (
+              <div>
+                <div style={{ color: '#4ec9b0', marginBottom: '16px' }}>
+                  ✅ Compilation successful! Generated:
+                  <br />• {state.tokens.length} tokens
+                  <br />• {Object.keys(state.symbolTable).length} symbols
+                  <br />• {state.threeAddressCode.length} three-address instructions
+                  <br />• {state.cpuCode.length} CPU instructions
+                  <br />• {state.cfg?.blocks?.size || 0} CFG blocks
+                  <br />• Register allocation completed
+                </div>
+                {state.executionOutput && (
+                  <div style={{ 
+                    background: '#1a1a1a', 
+                    padding: '12px', 
+                    borderRadius: '6px', 
+                    border: '1px solid #3c3c3c',
+                    marginTop: '12px'
+                  }}>
+                    <div style={{ color: '#58a6ff', fontWeight: '600', marginBottom: '8px' }}>
+                      🚀 Program Output:
+                    </div>
+                    <div style={{ 
+                      color: '#f0f6fc', 
+                      fontFamily: "'Fira Code', 'JetBrains Mono', 'Courier New', monospace",
+                      whiteSpace: 'pre-wrap'
+                    }}>
+                      {state.executionOutput}
+                    </div>
+                  </div>
+                )}
+                <div style={{ color: '#8b949e', marginTop: '12px', fontSize: '12px' }}>
+                  📋 Detailed compiler analysis is available in the panels below.
+                </div>
+              </div>
+            ) : (
+              'Results will appear here after running the compiler...'
+            )}
           </ResultOutput>
         </ResultsSection>
 
@@ -575,47 +578,41 @@ const CompilerInterface: React.FC<CompilerInterfaceProps> = ({ onBack }) => {
           </ErrorContainer>
         )}
 
-        {/* Compiler Panels */}
+        {/* Animated Compiler Panels */}
         <CompilerPanels>
-          <PanelDetails>
-            <PanelSummary>🔍 Tokens</PanelSummary>
-            <PanelContent>
-              {state.tokens.length > 0 ? JSON.stringify(state.tokens, null, 2) : 'Tokens will appear here...'}
-            </PanelContent>
-          </PanelDetails>
-
-          <PanelDetails>
-            <PanelSummary>📊 Symbol Table</PanelSummary>
-            <PanelContent>
-              {formatSymbolTable(state.symbolTable)}
-            </PanelContent>
-          </PanelDetails>
-
-          <PanelDetails>
-            <PanelSummary>🔢 Three-Address Code</PanelSummary>
-            <PanelContent>
-              {formatThreeAddressCode(state.threeAddressCode)}
-            </PanelContent>
-          </PanelDetails>
-
+          <AnimatedTokens tokens={state.tokens} />
+          <AnimatedSymbolTable symbolTable={state.symbolTable} />
+          <AnimatedThreeAddressCode threeAddressCode={state.threeAddressCode} />
+          <AnimatedCFG cfg={state.cfg} />
+          <AnimatedRegisterAllocation registerAllocation={state.registerAllocation} />
+          
+          {/* CPU Code Panel */}
           <PanelDetails>
             <PanelSummary>💻 CPU Code</PanelSummary>
             <PanelContent>
-              {formatCpuCode(state.cpuCode)}
-            </PanelContent>
-          </PanelDetails>
-
-          <PanelDetails>
-            <PanelSummary>🔄 Control Flow Graph</PanelSummary>
-            <PanelContent>
-              {formatCFG(state.cfg)}
-            </PanelContent>
-          </PanelDetails>
-
-          <PanelDetails>
-            <PanelSummary>🎯 Register Allocation</PanelSummary>
-            <PanelContent>
-              {formatRegisterAllocation(state.registerAllocation)}
+              {state.cpuCode && state.cpuCode.length > 0 ? (
+                <div>
+                  <div style={{ marginBottom: '12px', color: '#4ec9b0' }}>
+                    💻 CPU Code Generation:
+                  </div>
+                  <div style={{ 
+                    background: '#1a1a1a', 
+                    padding: '12px', 
+                    borderRadius: '6px', 
+                    border: '1px solid #3c3c3c',
+                    marginBottom: '12px'
+                  }}>
+                    <div style={{ color: '#f0f6fc', fontFamily: "'Fira Code', monospace", fontSize: '12px' }}>
+                      {formatCpuCode(state.cpuCode)}
+                    </div>
+                  </div>
+                  <div style={{ color: '#8b949e', fontSize: '11px' }}>
+                    💡 This shows the final assembly-like CPU instructions generated from the three-address code.
+                  </div>
+                </div>
+              ) : (
+                'No CPU code generated'
+              )}
             </PanelContent>
           </PanelDetails>
         </CompilerPanels>
