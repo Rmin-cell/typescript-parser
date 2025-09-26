@@ -3,9 +3,14 @@ import styled, { keyframes } from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface CpuInstruction {
-  opcode: string;
-  operands: string[];
-  [key: string]: any;
+  type: string;
+  reg?: string;
+  value?: string;
+  address?: string;
+  left?: string;
+  right?: string;
+  target?: string;
+  name?: string;
 }
 
 interface AnimatedCpuCodeProps {
@@ -27,31 +32,29 @@ const Title = styled.div`
   font-size: 14px;
 `;
 
-const InstructionsList = styled.div`
+const InstructionList = styled.div`
   display: flex;
   flex-direction: column;
   gap: 8px;
   margin-bottom: 16px;
 `;
 
-const InstructionCard = styled(motion.div)<{ opcode: string }>`
+const InstructionCard = styled(motion.div)<{ instructionType: string }>`
   background: ${props => {
-    const opcode = props.opcode.toLowerCase();
-    if (opcode.includes('load') || opcode.includes('store')) return 'linear-gradient(135deg, #4ec9b0, #58a6ff)';
-    if (opcode.includes('add') || opcode.includes('sub') || opcode.includes('mul') || opcode.includes('div')) return 'linear-gradient(135deg, #7c3aed, #58a6ff)';
-    if (opcode.includes('cmp') || opcode.includes('test')) return 'linear-gradient(135deg, #ffcc02, #ff9500)';
-    if (opcode.includes('jmp') || opcode.includes('call') || opcode.includes('ret')) return 'linear-gradient(135deg, #f85149, #ff6b6b)';
-    if (opcode.includes('mov')) return 'linear-gradient(135deg, #58a6ff, #7c3aed)';
+    const type = props.instructionType.toLowerCase();
+    if (type.includes('load') || type.includes('store')) return 'linear-gradient(135deg, #4ec9b0, #58a6ff)';
+    if (type.includes('add') || type.includes('sub') || type.includes('mul') || type.includes('div')) return 'linear-gradient(135deg, #58a6ff, #7c3aed)';
+    if (type.includes('jmp') || type.includes('je') || type.includes('jne') || type.includes('jl') || type.includes('jg')) return 'linear-gradient(135deg, #ffcc02, #ff9500)';
+    if (type.includes('call') || type.includes('ret')) return 'linear-gradient(135deg, #f85149, #ff6b6b)';
+    if (type.includes('label') || type.includes('function')) return 'linear-gradient(135deg, #8b949e, #6e7681)';
+    if (type.includes('print')) return 'linear-gradient(135deg, #96ceb4, #4ecdc4)';
     return 'linear-gradient(135deg, #30363d, #21262d)';
   }};
-  padding: 12px 16px;
-  border-radius: 6px;
+  padding: 12px;
+  border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   position: relative;
   overflow: hidden;
-  display: flex;
-  align-items: center;
-  gap: 12px;
   
   &::before {
     content: '';
@@ -69,36 +72,69 @@ const InstructionCard = styled(motion.div)<{ opcode: string }>`
   }
 `;
 
-const InstructionNumber = styled.div`
+const InstructionHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+`;
+
+const InstructionIndex = styled.div`
   color: #8b949e;
   font-size: 12px;
   font-weight: 600;
-  min-width: 30px;
-  text-align: center;
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(139, 148, 158, 0.1);
   padding: 4px 8px;
   border-radius: 4px;
 `;
 
+const InstructionType = styled.div`
+  color: #f0f6fc;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+`;
+
 const InstructionContent = styled.div`
-  flex: 1;
   color: #f0f6fc;
   font-family: 'Fira Code', 'JetBrains Mono', monospace;
-  font-size: 13px;
-  line-height: 1.4;
-`;
-
-const Opcode = styled.div`
-  color: #58a6ff;
-  font-weight: 600;
   font-size: 14px;
-  margin-bottom: 2px;
+  line-height: 1.4;
+  margin-bottom: 8px;
 `;
 
-const Operands = styled.div`
-  color: #8b949e;
-  font-size: 12px;
-  margin-top: 2px;
+const InstructionDetails = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+`;
+
+const DetailTag = styled.div<{ type: string }>`
+  background: ${props => {
+    switch (props.type) {
+      case 'register': return 'rgba(78, 201, 176, 0.2)';
+      case 'value': return 'rgba(88, 166, 255, 0.2)';
+      case 'address': return 'rgba(255, 204, 2, 0.2)';
+      case 'target': return 'rgba(248, 81, 73, 0.2)';
+      case 'operand': return 'rgba(139, 148, 158, 0.2)';
+      default: return 'rgba(139, 148, 158, 0.2)';
+    }
+  }};
+  color: ${props => {
+    switch (props.type) {
+      case 'register': return '#4ec9b0';
+      case 'value': return '#58a6ff';
+      case 'address': return '#ffcc02';
+      case 'target': return '#f85149';
+      case 'operand': return '#8b949e';
+      default: return '#8b949e';
+    }
+  }};
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
 `;
 
 const ProgressBar = styled.div`
@@ -135,39 +171,15 @@ const StatItem = styled.div`
 `;
 
 const StatValue = styled.div`
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   color: #4ec9b0;
 `;
 
 const StatLabel = styled.div`
-  font-size: 11px;
+  font-size: 10px;
   color: #8b949e;
   margin-top: 2px;
-`;
-
-const OpcodeIndicator = styled.div`
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: ${props => props.color || '#4ec9b0'};
-  box-shadow: 0 0 8px ${props => props.color || '#4ec9b0'};
-`;
-
-const AssemblyView = styled.div`
-  background: #1a1a1a;
-  border: 1px solid #3c3c3c;
-  border-radius: 6px;
-  padding: 12px;
-  margin-top: 12px;
-  font-family: 'Fira Code', 'JetBrains Mono', monospace;
-  font-size: 12px;
-  color: #f0f6fc;
-  max-height: 150px;
-  overflow-y: auto;
 `;
 
 const AnimatedCpuCode: React.FC<AnimatedCpuCodeProps> = ({ cpuCode }) => {
@@ -201,29 +213,105 @@ const AnimatedCpuCode: React.FC<AnimatedCpuCodeProps> = ({ cpuCode }) => {
           return prev;
         }
       });
-    }, 250);
+    }, 200);
 
     return () => clearInterval(interval);
   }, [cpuCode]);
 
-  const getOpcodeColor = (opcode: string) => {
-    const op = opcode.toLowerCase();
-    if (op.includes('load') || op.includes('store')) return '#4ec9b0';
-    if (op.includes('add') || op.includes('sub') || op.includes('mul') || op.includes('div')) return '#7c3aed';
-    if (op.includes('cmp') || op.includes('test')) return '#ffcc02';
-    if (op.includes('jmp') || op.includes('call') || op.includes('ret')) return '#f85149';
-    if (op.includes('mov')) return '#58a6ff';
-    return '#6e7681';
-  };
-
   const formatInstruction = (instruction: CpuInstruction, index: number) => {
-    const { opcode, operands, ...rest } = instruction;
-    const operandStr = operands ? operands.join(', ') : '';
-    return `${opcode} ${operandStr}`.trim();
+    const parts = [];
+    
+    switch (instruction.type) {
+      case 'LOAD':
+        parts.push(`LOAD ${instruction.reg}, ${instruction.value}`);
+        break;
+      case 'STORE':
+        parts.push(`STORE ${instruction.reg}, ${instruction.address}`);
+        break;
+      case 'ADD':
+        parts.push(`ADD ${instruction.reg}, ${instruction.left}, ${instruction.right}`);
+        break;
+      case 'SUB':
+        parts.push(`SUB ${instruction.reg}, ${instruction.left}, ${instruction.right}`);
+        break;
+      case 'MUL':
+        parts.push(`MUL ${instruction.reg}, ${instruction.left}, ${instruction.right}`);
+        break;
+      case 'DIV':
+        parts.push(`DIV ${instruction.reg}, ${instruction.left}, ${instruction.right}`);
+        break;
+      case 'MOD':
+        parts.push(`MOD ${instruction.reg}, ${instruction.left}, ${instruction.right}`);
+        break;
+      case 'CMP':
+        parts.push(`CMP ${instruction.left}, ${instruction.right}`);
+        break;
+      case 'JE':
+        parts.push(`JE ${instruction.target}`);
+        break;
+      case 'JNE':
+        parts.push(`JNE ${instruction.target}`);
+        break;
+      case 'JL':
+        parts.push(`JL ${instruction.target}`);
+        break;
+      case 'JG':
+        parts.push(`JG ${instruction.target}`);
+        break;
+      case 'JLE':
+        parts.push(`JLE ${instruction.target}`);
+        break;
+      case 'JGE':
+        parts.push(`JGE ${instruction.target}`);
+        break;
+      case 'JMP':
+        parts.push(`JMP ${instruction.target}`);
+        break;
+      case 'CALL':
+        parts.push(`CALL ${instruction.target}`);
+        break;
+      case 'RET':
+        parts.push('RET');
+        break;
+      case 'PUSH':
+        parts.push(`PUSH ${instruction.value}`);
+        break;
+      case 'POP':
+        parts.push(`POP ${instruction.reg}`);
+        break;
+      case 'PRINT':
+        parts.push(`PRINT ${instruction.reg}`);
+        break;
+      case 'LABEL':
+        parts.push(`${instruction.name}:`);
+        break;
+      case 'FUNCTION_START':
+        parts.push(`FUNCTION ${instruction.name}:`);
+        break;
+      case 'FUNCTION_END':
+        parts.push('FUNCTION_END');
+        break;
+      default:
+        parts.push(instruction.type);
+    }
+    
+    return parts.join(' ');
   };
 
-  const opcodes = visibleInstructions.reduce((acc, instruction) => {
-    acc[instruction.opcode] = (acc[instruction.opcode] || 0) + 1;
+  const getInstructionCategory = (instruction: CpuInstruction) => {
+    const type = instruction.type.toLowerCase();
+    if (type.includes('load') || type.includes('store')) return 'Memory';
+    if (type.includes('add') || type.includes('sub') || type.includes('mul') || type.includes('div') || type.includes('mod')) return 'Arithmetic';
+    if (type.includes('jmp') || type.includes('je') || type.includes('jne') || type.includes('jl') || type.includes('jg') || type.includes('jle') || type.includes('jge')) return 'Control Flow';
+    if (type.includes('call') || type.includes('ret') || type.includes('push') || type.includes('pop')) return 'Function';
+    if (type.includes('label') || type.includes('function')) return 'Labels';
+    if (type.includes('print')) return 'I/O';
+    return 'Other';
+  };
+
+  const instructionCategories = visibleInstructions.reduce((acc, instruction) => {
+    const category = getInstructionCategory(instruction);
+    acc[category] = (acc[category] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
 
@@ -250,15 +338,15 @@ const AnimatedCpuCode: React.FC<AnimatedCpuCodeProps> = ({ cpuCode }) => {
         />
       </ProgressBar>
 
-      <InstructionsList>
+      <InstructionList>
         <AnimatePresence>
           {visibleInstructions.map((instruction, index) => (
             <InstructionCard
               key={index}
-              opcode={instruction.opcode}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
+              instructionType={instruction.type}
+              initial={{ opacity: 0, scale: 0.8, x: -20 }}
+              animate={{ opacity: 1, scale: 1, x: 0 }}
+              exit={{ opacity: 0, scale: 0.8, x: 20 }}
               transition={{ 
                 duration: 0.4, 
                 delay: index * 0.1,
@@ -269,31 +357,28 @@ const AnimatedCpuCode: React.FC<AnimatedCpuCodeProps> = ({ cpuCode }) => {
                 transition: { duration: 0.2 }
               }}
             >
-              <OpcodeIndicator color={getOpcodeColor(instruction.opcode)} />
-              <InstructionNumber>{index}</InstructionNumber>
+              <InstructionHeader>
+                <InstructionIndex>{index}</InstructionIndex>
+                <InstructionType>{instruction.type}</InstructionType>
+              </InstructionHeader>
+              
               <InstructionContent>
-                <Opcode>{instruction.opcode}</Opcode>
-                <Operands>{instruction.operands?.join(', ') || 'No operands'}</Operands>
+                {formatInstruction(instruction, index)}
               </InstructionContent>
+              
+              <InstructionDetails>
+                {instruction.reg && <DetailTag type="register">REG: {instruction.reg}</DetailTag>}
+                {instruction.value && <DetailTag type="value">VAL: {instruction.value}</DetailTag>}
+                {instruction.address && <DetailTag type="address">ADDR: {instruction.address}</DetailTag>}
+                {instruction.left && <DetailTag type="operand">LEFT: {instruction.left}</DetailTag>}
+                {instruction.right && <DetailTag type="operand">RIGHT: {instruction.right}</DetailTag>}
+                {instruction.target && <DetailTag type="target">TARGET: {instruction.target}</DetailTag>}
+                {instruction.name && <DetailTag type="operand">NAME: {instruction.name}</DetailTag>}
+              </InstructionDetails>
             </InstructionCard>
           ))}
         </AnimatePresence>
-      </InstructionsList>
-
-      <AssemblyView>
-        <div style={{ color: '#4ec9b0', marginBottom: '8px', fontWeight: '600' }}>
-          Assembly Output:
-        </div>
-        {visibleInstructions.map((instruction, index) => (
-          <div key={index} style={{ marginBottom: '4px' }}>
-            <span style={{ color: '#8b949e' }}>{index.toString().padStart(2, '0')}:</span>
-            <span style={{ color: '#58a6ff', marginLeft: '8px' }}>{instruction.opcode}</span>
-            <span style={{ color: '#f0f6fc', marginLeft: '8px' }}>
-              {instruction.operands?.join(', ') || ''}
-            </span>
-          </div>
-        ))}
-      </AssemblyView>
+      </InstructionList>
 
       <StatsContainer>
         <StatItem>
@@ -301,8 +386,8 @@ const AnimatedCpuCode: React.FC<AnimatedCpuCodeProps> = ({ cpuCode }) => {
           <StatLabel>Instructions</StatLabel>
         </StatItem>
         <StatItem>
-          <StatValue>{Object.keys(opcodes).length}</StatLabel>
-          <StatLabel>Opcodes</StatLabel>
+          <StatValue>{Object.keys(instructionCategories).length}</StatValue>
+          <StatLabel>Categories</StatLabel>
         </StatItem>
         <StatItem>
           <StatValue>{Math.round(progress)}%</StatValue>
@@ -310,13 +395,13 @@ const AnimatedCpuCode: React.FC<AnimatedCpuCodeProps> = ({ cpuCode }) => {
         </StatItem>
       </StatsContainer>
 
-      {Object.keys(opcodes).length > 0 && (
+      {Object.keys(instructionCategories).length > 0 && (
         <div style={{ marginTop: '12px', fontSize: '12px', color: '#8b949e' }}>
-          <div style={{ marginBottom: '8px', fontWeight: '600' }}>Opcode Distribution:</div>
+          <div style={{ marginBottom: '8px', fontWeight: '600' }}>Instruction Categories:</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-            {Object.entries(opcodes).map(([opcode, count]) => (
+            {Object.entries(instructionCategories).map(([category, count]) => (
               <div
-                key={opcode}
+                key={category}
                 style={{
                   background: '#30363d',
                   padding: '4px 8px',
@@ -325,7 +410,7 @@ const AnimatedCpuCode: React.FC<AnimatedCpuCodeProps> = ({ cpuCode }) => {
                   color: '#f0f6fc'
                 }}
               >
-                {opcode}: {count}
+                {category}: {count}
               </div>
             ))}
           </div>

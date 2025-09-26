@@ -5,6 +5,7 @@ import AnimatedSymbolTable from './compiler/AnimatedSymbolTable';
 import AnimatedThreeAddressCode from './compiler/AnimatedThreeAddressCode';
 import AnimatedCFG from './compiler/AnimatedCFG';
 import AnimatedRegisterAllocation from './compiler/AnimatedRegisterAllocation';
+import AnimatedCpuCode from './compiler/AnimatedCpuCode';
 
 interface CompilerInterfaceProps {
   onBack: () => void;
@@ -595,36 +596,7 @@ const CompilerInterface: React.FC<CompilerInterfaceProps> = ({ onBack }) => {
           <AnimatedThreeAddressCode threeAddressCode={state.threeAddressCode} />
           <AnimatedCFG cfg={state.cfg} />
           <AnimatedRegisterAllocation registerAllocation={state.registerAllocation} />
-          
-          {/* CPU Code Panel */}
-          <PanelDetails>
-            <PanelSummary>💻 CPU Code</PanelSummary>
-            <PanelContent>
-              {state.cpuCode && state.cpuCode.length > 0 ? (
-                <div>
-                  <div style={{ marginBottom: '12px', color: '#4ec9b0' }}>
-                    💻 CPU Code Generation:
-                  </div>
-                  <div style={{ 
-                    background: '#1a1a1a', 
-                    padding: '12px', 
-                    borderRadius: '6px', 
-                    border: '1px solid #3c3c3c',
-                    marginBottom: '12px'
-                  }}>
-                    <div style={{ color: '#f0f6fc', fontFamily: "'Fira Code', monospace", fontSize: '12px' }}>
-                      {formatCpuCode(state.cpuCode)}
-                    </div>
-                  </div>
-                  <div style={{ color: '#8b949e', fontSize: '11px' }}>
-                    💡 This shows the final assembly-like CPU instructions generated from the three-address code.
-                  </div>
-                </div>
-              ) : (
-                'No CPU code generated'
-              )}
-            </PanelContent>
-          </PanelDetails>
+          <AnimatedCpuCode cpuCode={state.cpuCode} />
         </CompilerPanels>
       </CompilerBody>
     </CompilerContainer>
