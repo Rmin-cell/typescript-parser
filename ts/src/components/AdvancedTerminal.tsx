@@ -564,7 +564,7 @@ const AdvancedTerminal: React.FC = () => {
           <TerminalLine key={line.id} type={line.type}>
             {line.type === 'input' && (
               <>
-                    <Prompt>$</Prompt> <User>{username}</User>@<Directory>compiler-visualizer</Directory> {line.content}
+                    <Prompt>$</Prompt> <User>{username}</User>@<Directory>compiler</Directory> {line.content}
               </>
             )}
             {line.type === 'output' && line.content}
@@ -574,7 +574,7 @@ const AdvancedTerminal: React.FC = () => {
         ))}
 
         <InputLine>
-          <Prompt>$</Prompt> <User>{username}</User>@<Directory>compiler-visualizer</Directory> {currentInput}
+          <Prompt>$</Prompt> <User>{username}</User>@<Directory>compiler:</Directory> {currentInput}
           <Cursor visible={showCursor && !isTyping}>█</Cursor>
           {showCompiler && (
             <div style={{ 

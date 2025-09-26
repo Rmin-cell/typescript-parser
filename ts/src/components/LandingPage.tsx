@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Modal, Typography, Space } from 'antd';
+import { Button, Modal, Typography, Space, List, Divider } from 'antd';
 import { CodeOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import styled from 'styled-components';
@@ -328,52 +328,7 @@ const StepText = styled.span<{ completed: boolean; active: boolean }>`
 `;
 
 const AboutModalContent = styled.div`
-  text-align: left;
   max-width: 600px;
-  line-height: 1.6;
-
-  h2 {
-    color: #58a6ff;
-    margin-bottom: 20px;
-    text-align: center;
-  }
-
-  h3 {
-    color: #7c3aed;
-    margin-bottom: 15px;
-  }
-
-  p {
-    margin-bottom: 20px;
-    color: #f0f6fc;
-  }
-
-  ul {
-    list-style: none;
-    padding: 0;
-    margin-bottom: 20px;
-  }
-
-  li {
-    margin: 6px 0;
-    padding-left: 20px;
-    position: relative;
-    color: #f0f6fc;
-
-    &::before {
-      content: "•";
-      color: #4ec9b0;
-      position: absolute;
-      left: 0;
-    }
-  }
-
-  code {
-    background: #252526;
-    padding: 2px 6px;
-    border-radius: 4px;
-    color: #58a6ff;
-  }
 `;
 
 interface FloatingCodeItem {
@@ -897,44 +852,46 @@ const LandingPage: React.FC = () => {
       </ContentWrapper>
 
       <Modal
-        title="Compiler Visualizer v1.0.0"
+        title="🚀 Compiler Visualizer v1.0.0"
         open={isAboutModalVisible}
         onCancel={handleAboutModalClose}
         footer={null}
-        width={700}
-        style={{ top: 20 }}
-        bodyStyle={{ 
-          background: '#1e1e1e', 
-          color: '#f0f6fc',
-          border: '2px solid #30363d',
-          borderRadius: '12px'
-        }}
+        width={600}
       >
         <AboutModalContent>
-          <p>
-            A comprehensive compiler implementation built with TypeScript, 
-            featuring lexical analysis, parsing, intermediate code generation, and visualization tools.
-          </p>
+          <Typography.Paragraph>
+            An interactive compiler visualization tool built with TypeScript and React. 
+            Experience the full compiler pipeline with real-time animations and educational insights.
+          </Typography.Paragraph>
           
-          <h3>🖥️ How to Use</h3>
-          <p>Click "Terminal" to access the interactive terminal interface where you can:</p>
+          <Typography.Title level={4}>🚀 Getting Started</Typography.Title>
           
-          <ul>
-            <li>
-              Type <code>help</code> to see all available commands
-            </li>
-            <li>
-              Use <code>compiler</code> to start the full compiler mode
-            </li>
-            <li>
-              Type <code>exit</code> to return to this page
-            </li>
-          </ul>
+          <Typography.Paragraph>
+            Click "Terminal" to access the interactive interface:
+          </Typography.Paragraph>
           
-          <p style={{ marginBottom: 0, color: '#8b949e', fontSize: '0.9rem', textAlign: 'center' }}>
-            Built with TypeScript and React,<br />
+          <List
+            size="small"
+            dataSource={[
+              'Type help to see all available commands',
+              'Use compiler to start the full compiler mode', 
+              'Type exit to return to this page'
+            ]}
+            renderItem={(item) => (
+              <List.Item>
+                <Typography.Text code>{item.split(' ')[0]}</Typography.Text>
+                <span style={{ marginLeft: '8px' }}>{item.substring(item.indexOf(' ') + 1)}</span>
+              </List.Item>
+            )}
+          />
+          
+          <Divider />
+          
+          <Typography.Text type="secondary">
+            <strong>Compiler Visualizer v1.0.0</strong><br />
+            Built with TypeScript and React
             Developed by Armin Momeni
-          </p>
+          </Typography.Text>
         </AboutModalContent>
       </Modal>
     </LandingContainer>
