@@ -372,14 +372,24 @@ const CompilerInterface: React.FC<CompilerInterfaceProps> = ({ onBack }) => {
       // Tokenize the code
       const lexResult = compilerLexer.tokenize(state.code);
       if (lexResult.errors.length > 0) {
-        setState(prev => ({ ...prev, errors: lexResult.errors }));
+        setState(prev => ({ 
+          ...prev, 
+          errors: lexResult.errors.map(error => 
+            `Lexical error: ${error.message} at line ${error.line}, column ${error.column}`
+          )
+        }));
         return;
       }
 
       // Parse the code
       const parseResult = parseProgram(state.code);
       if (parseResult.errors.length > 0) {
-        setState(prev => ({ ...prev, errors: parseResult.errors }));
+        setState(prev => ({ 
+          ...prev, 
+          errors: parseResult.errors.map(error => 
+            typeof error === 'string' ? error : `Parse error: ${error.message || error}`
+          )
+        }));
         return;
       }
 

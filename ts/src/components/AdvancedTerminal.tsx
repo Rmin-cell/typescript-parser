@@ -540,14 +540,6 @@ const AdvancedTerminal: React.FC = () => {
       <MainContainer>
         <TerminalSection>
       <TerminalBody ref={terminalRef}>
-        <WelcomeMessage>
-          🚀 Compiler Visualizer Terminal
-          <br />
-          <span style={{ fontSize: '14px', color: '#8b949e', marginTop: '8px', display: 'block' }}>
-            Interactive Compiler Development Environment
-          </span>
-        </WelcomeMessage>
-
         {lines.map((line, index) => (
           <TerminalLine key={line.id} type={line.type}>
             {line.type === 'input' && (
